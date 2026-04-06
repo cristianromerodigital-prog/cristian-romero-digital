@@ -2340,7 +2340,9 @@ function getContent() {
   try { return JSON.parse(localStorage.getItem('crd_content')) || {}; } catch(e) { return {}; }
 }
 function setContent(data) {
-  localStorage.setItem('crd_content', JSON.stringify(data));
+  const str = JSON.stringify(data);
+  localStorage.setItem('crd_content', str);
+  syncToCloud('crd_content', str);
 }
 
 function switchContentTab(tab, btn) {
