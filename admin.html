@@ -2943,10 +2943,14 @@ function updateBulkCount() {
 function deleteSelected() {
   const selected = [...document.querySelectorAll('.portfolio-item-cb:checked')].map(cb => cb.dataset.id);
   if(!selected.length) { toast('No hay fotos seleccionadas', 'error'); return; }
-  if(!confirm('¿Eliminar ' + selected.length + ' foto' + (selected.length>1?'s':'') + '?')) return;
+  if(!confirm('¿Eliminar ' + selected.length + ' foto' + (selected.length>1?'s':'') + '? (Solo del sitio — para borrar de Cloudinary usá su dashboard)')) return;
   const items = (S.get('crd_portfolio') || []).filter(item => !selected.includes(String(item.id)));
   S.set('crd_portfolio', items);
-  toggleBulkMode(false);
+  bulkMode = false;
+  const toolbar = document.getElementById('bulk-toolbar');
+  const toggleBtn = document.getElementById('bulk-toggle-btn');
+  if(toolbar) toolbar.style.display = 'none';
+  if(toggleBtn) toggleBtn.style.display = 'inline-block';
   toast(selected.length + ' foto' + (selected.length>1?'s':'') + ' eliminada' + (selected.length>1?'s':'') + ' ✓');
   renderPortfolioAdmin();
 }
@@ -2965,6 +2969,7 @@ function openCloudinaryWidget() {
       folder: 'portfolio',
       clientAllowedFormats: ['jpg','jpeg','png','webp'],
       maxFileSize: 10000000,
+      sources: ['local', 'camera', 'image_search', 'url'],
       language: 'es',
       text: {
         'es': {
@@ -2999,7 +3004,7 @@ function openCloudinaryWidget() {
           id: Date.now() + Math.random(),
           url: info.secure_url,
           title: info.original_filename || 'Foto',
-          category: 'xv',
+          category: portfolioFilter !== 'all' ? portfolioFilter : 'xv',
           cloudinaryId: info.public_id
         });
         S.set('crd_portfolio', items);
