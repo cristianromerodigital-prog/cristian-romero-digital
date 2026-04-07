@@ -314,12 +314,13 @@ nav.scrolled { box-shadow: 0 4px 40px rgba(0,0,0,0.5); }
 }
 .filter-btn:last-child { border-right:none; }
 .filter-btn.active, .filter-btn:hover { color:#ffffff; background:var(--ink); }
-.portfolio-grid { columns:4; column-gap:2px; }
+.portfolio-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:2px; }
 .portfolio-item {
   position:relative; background:var(--paper3); overflow:hidden;
-  cursor:pointer; break-inside:avoid; margin-bottom:2px; display:block;
+  cursor:pointer; display:block; aspect-ratio:2/3;
   opacity:1; transform:none;
 }
+.portfolio-item img { width:100%; height:100%; object-fit:cover; display:block; }
 .portfolio-item img { width:100%; height:auto; display:block; filter:saturate(0.15) brightness(0.9); transition:filter 0.5s ease, transform 0.5s ease; }
 .portfolio-item:hover img { filter:saturate(1) brightness(1); transform:scale(1.02); }
 .portfolio-item-overlay {
@@ -510,7 +511,7 @@ footer { background:var(--paper2); border-top:1px solid var(--border); padding:8
 @media(max-width:1024px) {
   .about,.social-section,.contact { grid-template-columns:1fr; padding:80px 40px; gap:60px; }
   .services-grid, .pricing-grid, .blog-grid, .testimonials-grid { grid-template-columns:1fr; }
-  .portfolio-grid { columns:3; column-gap:2px; }
+  .portfolio-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:2px; }
   .portfolio-item.wide { column-span:all; }
   .footer-grid { grid-template-columns:1fr 1fr; gap:40px; }
 }
@@ -521,7 +522,7 @@ footer { background:var(--paper2); border-top:1px solid var(--border); padding:8
   .hamburger { display:flex; }
   .hero { grid-template-columns:1fr; padding:140px 24px 80px; }
   .portfolio-section,.services,.pricing,.testimonials,.blog-section,.clients-section { padding:80px 24px; }
-  .portfolio-grid { columns:2; column-gap:2px; }
+  .portfolio-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:2px; }
   .portfolio-item.wide { column-span:unset; }
   .countdown-bar { padding:20px; gap:20px; }
   .footer-grid { grid-template-columns:1fr; }
@@ -1351,7 +1352,20 @@ function renderPortfolio() {
     </div>
   `).join('');
   const rendered = grid.querySelectorAll('.portfolio-item').length;
-  debugLog('Grid now has ' + rendered + ' DOM elements — grid visible: ' + (grid.offsetHeight > 0));
+  const cs = window.getComputedStyle(grid);
+  debugLog('Grid DOM elements: ' + rendered);
+  debugLog('Grid CSS — display:' + cs.display + ' | width:' + cs.width + ' | height:' + cs.height + ' | overflow:' + cs.overflow);
+  debugLog('Grid offsetHeight:' + grid.offsetHeight + ' | offsetWidth:' + grid.offsetWidth + ' | visible:' + (grid.offsetHeight > 0));
+  const firstItem = grid.querySelector('.portfolio-item');
+  if(firstItem) {
+    const ci = window.getComputedStyle(firstItem);
+    debugLog('First item — display:' + ci.display + ' | width:' + ci.width + ' | height:' + ci.height + ' | opacity:' + ci.opacity + ' | visibility:' + ci.visibility);
+    const img = firstItem.querySelector('img');
+    if(img) {
+      const cimg = window.getComputedStyle(img);
+      debugLog('First img — width:' + cimg.width + ' | height:' + cimg.height + ' | display:' + cimg.display + ' | loaded:' + img.complete);
+    }
+  }
   grid.querySelectorAll('.portfolio-item').forEach((el, i) => {
     el.classList.add('in-view');
     el.addEventListener('click', () => openLightbox(parseInt(el.dataset.idx)));
