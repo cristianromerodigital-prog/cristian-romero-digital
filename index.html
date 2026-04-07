@@ -314,20 +314,16 @@ nav.scrolled { box-shadow: 0 4px 40px rgba(0,0,0,0.5); }
 }
 .filter-btn:last-child { border-right:none; }
 .filter-btn.active, .filter-btn:hover { color:#ffffff; background:var(--ink); }
-.portfolio-grid { columns:6; column-gap:2px; }
+.portfolio-grid { columns:4; column-gap:2px; }
 .portfolio-item {
   position:relative; background:var(--paper3); overflow:hidden;
   cursor:pointer; break-inside:avoid; margin-bottom:2px; display:block;
-  opacity:0; transform:translateY(48px);
-  transition:opacity 0.8s cubic-bezier(0.2,0.8,0.3,1), transform 0.8s cubic-bezier(0.2,0.8,0.3,1);
+  opacity:1; transform:none;
 }
-.portfolio-item.in-view { opacity:1; transform:translateY(0); }
-.portfolio-item.wide { column-span:all; }
-.portfolio-item img { width:100%; height:auto; display:block; filter:saturate(0.2) brightness(0.88); transition:filter 0.6s ease, transform 0.6s ease; }
-.portfolio-item:hover img { filter:saturate(1) brightness(1.01); transform:scale(1.025); }
+.portfolio-item img { width:100%; height:auto; display:block; filter:saturate(0.15) brightness(0.9); transition:filter 0.5s ease, transform 0.5s ease; }
+.portfolio-item:hover img { filter:saturate(1) brightness(1); transform:scale(1.02); }
 .portfolio-item-overlay {
-  position:absolute; inset:0; background:linear-gradient(to top,rgba(8,8,16,0.85) 0%,transparent 50%);
-  opacity:0; transition:opacity var(--trans); display:flex; align-items:flex-end; padding:24px;
+  display:none;
 }
 .portfolio-item:hover .portfolio-item-overlay { opacity:1; }
 .portfolio-item-info { }
@@ -514,7 +510,7 @@ footer { background:var(--paper2); border-top:1px solid var(--border); padding:8
 @media(max-width:1024px) {
   .about,.social-section,.contact { grid-template-columns:1fr; padding:80px 40px; gap:60px; }
   .services-grid, .pricing-grid, .blog-grid, .testimonials-grid { grid-template-columns:1fr; }
-  .portfolio-grid { columns:4; }
+  .portfolio-grid { columns:3; column-gap:2px; }
   .portfolio-item.wide { column-span:all; }
   .footer-grid { grid-template-columns:1fr 1fr; gap:40px; }
 }
@@ -525,7 +521,7 @@ footer { background:var(--paper2); border-top:1px solid var(--border); padding:8
   .hamburger { display:flex; }
   .hero { grid-template-columns:1fr; padding:140px 24px 80px; }
   .portfolio-section,.services,.pricing,.testimonials,.blog-section,.clients-section { padding:80px 24px; }
-  .portfolio-grid { columns:2; }
+  .portfolio-grid { columns:2; column-gap:2px; }
   .portfolio-item.wide { column-span:unset; }
   .countdown-bar { padding:20px; gap:20px; }
   .footer-grid { grid-template-columns:1fr; }
@@ -767,6 +763,12 @@ body::before {
     <p class="body-text">Me especializo en <strong>quinceañeras y casamientos</strong> en Buenos Aires, con un estilo cinematográfico que busca la emoción auténtica detrás de cada momento. No trabajo con poses forzadas — trabajo con <strong>historias reales</strong>.</p>
     <p class="body-text">Desde mis inicios entendí que la fotografía social va mucho más allá del disparo técnico. Es <strong>dirección creativa, timing, emoción y narrativa visual</strong>. Por eso cada trabajo que entrego tiene una coherencia estética que las familias van a querer mostrar por siempre.</p>
     <p class="body-text">Opero bajo las marcas <strong>Cristian Romero Digital</strong> y <strong>Cristian Romero Digital</strong>, con la visión de expandirme hacia la formación para fotógrafos que quieren vivir de lo que aman.</p>
+    <div class="stats-grid">
+      <div class="stat"><span class="stat-n" id="stat-events">300+</span><span class="stat-l">Eventos cubiertos</span></div>
+      <div class="stat"><span class="stat-n">8+</span><span class="stat-l">Años experiencia</span></div>
+      <div class="stat"><span class="stat-n">2</span><span class="stat-l">Marcas propias</span></div>
+      <div class="stat"><span class="stat-n">100%</span><span class="stat-l">Clientes felices</span></div>
+    </div>
     <br>
     <button class="btn-primary" onclick="openWA('consultar')">Hablemos de tu evento</button>
   </div>
@@ -1121,23 +1123,34 @@ const SITE_CONFIG = {
 };
 
 
-// ── CLOUDFLARE SYNC — load data from cloud ──
+// ── CLOUDFLARE SYNC — start fetching immediately ──
 const CF_URL = 'https://web.cristian-romero-digital.workers.dev';
-const CF_KEYS = ["crd_portfolio", "crd_testimonials", "crd_posts", "crd_settings", "crd_content", "crd_site_photos", "crd_hero_video_url"];
+const CF_KEYS = ["crd_portfolio", "crd_testimonials", "crd_posts", "crd_settings", "crd_content", "crd_site_photos", "crd_hero_video_url", "crd_categories"];
+
+// Start all fetches immediately — don't wait for DOM
+const _cloudPromises = {};
+CF_KEYS.forEach(key => {
+  _cloudPromises[key] = fetch(CF_URL + '/' + key + '?t=' + Date.now())
+    .then(r => r.text())
+    .then(text => {
+      if(text && text !== 'null') localStorage.setItem(key, text);
+    })
+    .catch(() => {});
+});
 
 async function loadFromCloud() {
   try {
-    await Promise.all(CF_KEYS.map(async key => {
-      const res = await fetch(CF_URL + '/' + key + '?t=' + Date.now()); // bypass cache
-      const text = await res.text();
-      if (text && text !== 'null') {
-        localStorage.setItem(key, text); // always overwrite with cloud data
-      }
-    }));
+    await Promise.all(Object.values(_cloudPromises));
   } catch(e) {
     console.log('Cloud sync failed, using localStorage:', e.message);
   }
 }
+// ── GLOBALS ──
+let portfolioItems = [];
+let lightboxItems = [];
+let currentFilter = 'all';
+let lightboxIndex = 0;
+
 // ── STORAGE HELPERS ──
 const S = {
   get: k => { try { return JSON.parse(localStorage.getItem(k)) } catch(e) { return null } },
@@ -1167,25 +1180,25 @@ function initDefaults() {
   }
 }
 initDefaults();
-// Load from cloud then render
+
+// Render immediately from localStorage, then update from cloud
+function renderAll() {
+  renderPortfolioFilters();
+  renderPortfolio();
+  renderTestimonials();
+  renderBlog();
+  renderPricing();
+  applySitePhotos();
+  applyHeroVideo();
+  applyContent();
+  initPortfolioReveal();
+}
+
+renderAll();
 loadFromCloud().then(() => {
-  renderPortfolio();
-  renderTestimonials();
-  renderBlog();
-  renderPricing();
-  applySitePhotos();
-  applyHeroVideo();
-  applyContent();
-  initPortfolioReveal();
+  renderAll();
 }).catch(() => {
-  renderPortfolio();
-  renderTestimonials();
-  renderBlog();
-  renderPricing();
-  applySitePhotos();
-  applyHeroVideo();
-  applyContent();
-  initPortfolioReveal();
+  renderAll();
 });
 
 // ── PRELOADER ──
@@ -1254,15 +1267,33 @@ function updateCountdown() {
 updateCountdown(); setInterval(updateCountdown, 1000);
 
 // ── PORTFOLIO ──
-let portfolioItems = [];
-let lightboxItems = [];
-let currentFilter = 'all';
-let lightboxIndex = 0;
+
+function renderPortfolioFilters() {
+  try {
+    const cats = JSON.parse(localStorage.getItem('crd_categories'));
+    if(!cats || !cats.length) return;
+    const enabled = cats.filter(c => c.enabled);
+    if(!enabled.length) return;
+    const container = document.querySelector('.portfolio-filters');
+    if(!container) return;
+    container.innerHTML = '<button class="filter-btn active" data-filter="all">Todos</button>' +
+      enabled.map(c => `<button class="filter-btn" data-filter="${c.key}">${c.name}</button>`).join('');
+    // Re-attach filter events
+    container.querySelectorAll('.filter-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        container.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentFilter = btn.dataset.filter;
+        renderPortfolio();
+      });
+    });
+  } catch(e) {}
+}
 
 function renderPortfolio() {
   const grid = document.getElementById('portfolio-grid');
   const empty = document.getElementById('portfolio-empty');
-  const items = S.get('crd_portfolio') || [];
+  let items = S.get('crd_portfolio') || [];
   const filtered = currentFilter === 'all' ? items : items.filter(i => i.category === currentFilter);
   portfolioItems = filtered;
   lightboxItems = filtered.filter(i => i.url);
@@ -1271,7 +1302,7 @@ function renderPortfolio() {
   grid.innerHTML = filtered.map((item,idx) => `
     <div class="portfolio-item ${item.wide ? 'wide' : ''}" data-idx="${idx}" data-filter="${item.category}">
       ${item.url
-        ? `<img src="${item.url}" alt="${item.title}" loading="lazy">`
+        ? `<img src="${item.url}" alt="${item.title}" loading="eager">`
         : `<div class="portfolio-placeholder"><svg width="32" height="32" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="opacity:0.2"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg><span>${item.title}</span></div>`
       }
       <div class="portfolio-item-overlay">
@@ -1283,7 +1314,7 @@ function renderPortfolio() {
     </div>
   `).join('');
   grid.querySelectorAll('.portfolio-item').forEach((el, i) => {
-    setTimeout(() => el.classList.add('in-view'), i * 60);
+    el.classList.add('in-view');
     el.addEventListener('click', () => openLightbox(parseInt(el.dataset.idx)));
   });
 }
@@ -1473,6 +1504,8 @@ function applySitePhotos() {
 
 // ── PORTFOLIO SCROLL REVEAL — fotos se levantan del piso ──
 function initPortfolioReveal() {
+  // Items visible by default — no animation needed
+  return;
   const grid = document.getElementById('portfolio-grid');
   if (!grid) return;
   const revealObserver = new IntersectionObserver((entries) => {
@@ -1687,6 +1720,19 @@ function openWA(msgKey) {
   }
   const text = msgs[msgKey] || defaultMsgs[msgKey] || defaultMsgs.consultar;
   window.open('https://wa.me/' + wa + '?text=' + encodeURIComponent(text), '_blank');
+}
+
+// ── SCROLL TO PORTFOLIO WITH RENDER ──
+function scrollToPortfolio(e) {
+  e.preventDefault();
+  const section = document.getElementById('portfolio');
+  if(!section) return;
+  section.scrollIntoView({behavior:'smooth'});
+  // Render after scroll completes (~600ms)
+  setTimeout(() => {
+    renderPortfolio();
+    initPortfolioReveal();
+  }, 650);
 }
 
 // ── BACK TO TOP ──
