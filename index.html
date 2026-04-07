@@ -1126,19 +1126,24 @@ const SITE_CONFIG = {
 };
 
 
-// ── CLOUDFLARE SYNC — load data from cloud ──
+// ── CLOUDFLARE SYNC — start fetching immediately ──
 const CF_URL = 'https://web.cristian-romero-digital.workers.dev';
 const CF_KEYS = ["crd_portfolio", "crd_testimonials", "crd_posts", "crd_settings", "crd_content", "crd_site_photos", "crd_hero_video_url", "crd_categories"];
 
+// Start all fetches immediately — don't wait for DOM
+const _cloudPromises = {};
+CF_KEYS.forEach(key => {
+  _cloudPromises[key] = fetch(CF_URL + '/' + key + '?t=' + Date.now())
+    .then(r => r.text())
+    .then(text => {
+      if(text && text !== 'null') localStorage.setItem(key, text);
+    })
+    .catch(() => {});
+});
+
 async function loadFromCloud() {
   try {
-    await Promise.all(CF_KEYS.map(async key => {
-      const res = await fetch(CF_URL + '/' + key + '?t=' + Date.now());
-      const text = await res.text();
-      if (text && text !== 'null') {
-        localStorage.setItem(key, text);
-      }
-    }));
+    await Promise.all(Object.values(_cloudPromises));
   } catch(e) {
     console.log('Cloud sync failed, using localStorage:', e.message);
   }
