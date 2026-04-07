@@ -789,6 +789,13 @@ body::before {
     <button class="filter-btn" data-filter="book-xv">Book de XV</button>
     <button class="filter-btn" data-filter="book-boda">Book Pre-Boda</button>
   </div>
+  
+  <!-- DEBUG PANEL — remove after fixing -->
+  <div id="portfolio-debug" style="background:#fff3cd;border:1px solid #ffc107;padding:12px 16px;margin-bottom:16px;font-size:12px;font-family:monospace;display:none">
+    <strong>Portfolio Debug:</strong>
+    <div id="debug-log" style="margin-top:6px;line-height:1.8"></div>
+  </div>
+
   <div class="portfolio-grid reveal" id="portfolio-grid">
     <!-- Populated by JS from localStorage -->
   </div>
@@ -1139,10 +1146,14 @@ CF_KEYS.forEach(key => {
 });
 
 async function loadFromCloud() {
+  debugLog('Starting Cloudflare fetch...');
   try {
     await Promise.all(Object.values(_cloudPromises));
+    const items = S.get('crd_portfolio') || [];
+    debugLog('Cloud load complete — crd_portfolio now has ' + items.length + ' items');
   } catch(e) {
-    console.log('Cloud sync failed, using localStorage:', e.message);
+    debugLog('Cloud load FAILED: ' + e.message);
+    console.log('Cloud sync failed:', e.message);
   }
 }
 // ── GLOBALS ──
@@ -1298,15 +1309,33 @@ function renderPortfolioFilters() {
   } catch(e) {}
 }
 
+function debugLog(msg) {
+  const panel = document.getElementById('portfolio-debug');
+  const log = document.getElementById('debug-log');
+  if(panel && log) {
+    panel.style.display = 'block';
+    log.innerHTML += '<div>' + new Date().toLocaleTimeString() + ' — ' + msg + '</div>';
+  }
+  console.log('[Portfolio]', msg);
+}
+
 function renderPortfolio() {
   const grid = document.getElementById('portfolio-grid');
   const empty = document.getElementById('portfolio-empty');
   let items = S.get('crd_portfolio') || [];
+  debugLog('renderPortfolio() called — items in localStorage: ' + items.length);
   const filtered = currentFilter === 'all' ? [...items].sort(() => Math.random() - 0.5) : [...items].filter(i => i.category === currentFilter).sort(() => Math.random() - 0.5);
+  debugLog('filter: ' + currentFilter + ' — filtered: ' + filtered.length + ' items');
   portfolioItems = filtered;
   lightboxItems = filtered.filter(i => i.url);
-  if (!filtered.length) { grid.innerHTML=''; empty.style.display='block'; return; }
+  if (!filtered.length) {
+    grid.innerHTML='';
+    empty.style.display='block';
+    debugLog('No items to show — grid empty');
+    return;
+  }
   empty.style.display='none';
+  debugLog('Rendering ' + filtered.length + ' items into grid');
   grid.innerHTML = filtered.map((item,idx) => `
     <div class="portfolio-item ${item.wide ? 'wide' : ''}" data-idx="${idx}" data-filter="${item.category}">
       ${item.url
@@ -1321,6 +1350,8 @@ function renderPortfolio() {
       </div>
     </div>
   `).join('');
+  const rendered = grid.querySelectorAll('.portfolio-item').length;
+  debugLog('Grid now has ' + rendered + ' DOM elements — grid visible: ' + (grid.offsetHeight > 0));
   grid.querySelectorAll('.portfolio-item').forEach((el, i) => {
     el.classList.add('in-view');
     el.addEventListener('click', () => openLightbox(parseInt(el.dataset.idx)));
