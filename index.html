@@ -314,15 +314,16 @@ nav.scrolled { box-shadow: 0 4px 40px rgba(0,0,0,0.5); }
 }
 .filter-btn:last-child { border-right:none; }
 .filter-btn.active, .filter-btn:hover { color:#ffffff; background:var(--ink); }
-.portfolio-grid { display:grid; grid-template-columns:repeat(6,1fr); gap:2px; }
+.portfolio-grid { columns:6; column-gap:2px; }
 .portfolio-item {
   position:relative; background:var(--paper3); overflow:hidden;
-  cursor:pointer; display:block; aspect-ratio:3/4;
+  cursor:pointer; break-inside:avoid; margin-bottom:2px; display:block;
   opacity:0; transform:translateY(48px);
   transition:opacity 0.8s cubic-bezier(0.2,0.8,0.3,1), transform 0.8s cubic-bezier(0.2,0.8,0.3,1);
 }
 .portfolio-item.in-view { opacity:1; transform:translateY(0); }
-.portfolio-item img { width:100%; height:100%; object-fit:cover; display:block; filter:saturate(0.2) brightness(0.88); transition:filter 0.6s ease, transform 0.6s ease; }
+.portfolio-item.wide { column-span:all; }
+.portfolio-item img { width:100%; height:auto; display:block; filter:saturate(0.2) brightness(0.88); transition:filter 0.6s ease, transform 0.6s ease; }
 .portfolio-item:hover img { filter:saturate(1) brightness(1.01); transform:scale(1.025); }
 .portfolio-item-overlay {
   position:absolute; inset:0; background:linear-gradient(to top,rgba(8,8,16,0.85) 0%,transparent 50%);
@@ -513,7 +514,7 @@ footer { background:var(--paper2); border-top:1px solid var(--border); padding:8
 @media(max-width:1024px) {
   .about,.social-section,.contact { grid-template-columns:1fr; padding:80px 40px; gap:60px; }
   .services-grid, .pricing-grid, .blog-grid, .testimonials-grid { grid-template-columns:1fr; }
-  .portfolio-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:2px; }
+  .portfolio-grid { columns:4; }
   .portfolio-item.wide { column-span:all; }
   .footer-grid { grid-template-columns:1fr 1fr; gap:40px; }
 }
@@ -524,7 +525,7 @@ footer { background:var(--paper2); border-top:1px solid var(--border); padding:8
   .hamburger { display:flex; }
   .hero { grid-template-columns:1fr; padding:140px 24px 80px; }
   .portfolio-section,.services,.pricing,.testimonials,.blog-section,.clients-section { padding:80px 24px; }
-  .portfolio-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:2px; }
+  .portfolio-grid { columns:2; }
   .portfolio-item.wide { column-span:unset; }
   .countdown-bar { padding:20px; gap:20px; }
   .footer-grid { grid-template-columns:1fr; }
@@ -766,12 +767,6 @@ body::before {
     <p class="body-text">Me especializo en <strong>quinceañeras y casamientos</strong> en Buenos Aires, con un estilo cinematográfico que busca la emoción auténtica detrás de cada momento. No trabajo con poses forzadas — trabajo con <strong>historias reales</strong>.</p>
     <p class="body-text">Desde mis inicios entendí que la fotografía social va mucho más allá del disparo técnico. Es <strong>dirección creativa, timing, emoción y narrativa visual</strong>. Por eso cada trabajo que entrego tiene una coherencia estética que las familias van a querer mostrar por siempre.</p>
     <p class="body-text">Opero bajo las marcas <strong>Cristian Romero Digital</strong> y <strong>Cristian Romero Digital</strong>, con la visión de expandirme hacia la formación para fotógrafos que quieren vivir de lo que aman.</p>
-    <div class="stats-grid">
-      <div class="stat"><span class="stat-n" id="stat-events">300+</span><span class="stat-l">Eventos cubiertos</span></div>
-      <div class="stat"><span class="stat-n">8+</span><span class="stat-l">Años experiencia</span></div>
-      <div class="stat"><span class="stat-n">2</span><span class="stat-l">Marcas propias</span></div>
-      <div class="stat"><span class="stat-n">100%</span><span class="stat-l">Clientes felices</span></div>
-    </div>
     <br>
     <button class="btn-primary" onclick="openWA('consultar')">Hablemos de tu evento</button>
   </div>
