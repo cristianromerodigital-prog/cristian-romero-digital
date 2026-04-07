@@ -1147,6 +1147,12 @@ async function loadFromCloud() {
     console.log('Cloud sync failed, using localStorage:', e.message);
   }
 }
+// ── GLOBALS ──
+let portfolioItems = [];
+let lightboxItems = [];
+let currentFilter = 'all';
+let lightboxIndex = 0;
+
 // ── STORAGE HELPERS ──
 const S = {
   get: k => { try { return JSON.parse(localStorage.getItem(k)) } catch(e) { return null } },
@@ -1176,38 +1182,25 @@ function initDefaults() {
   }
 }
 initDefaults();
-// Render immediately from localStorage
-renderPortfolioFilters();
-renderPortfolio();
-renderTestimonials();
-renderBlog();
-renderPricing();
-applySitePhotos();
-applyHeroVideo();
-applyContent();
-initPortfolioReveal();
 
-// Then update from cloud and re-render
+// Render immediately from localStorage, then update from cloud
+function renderAll() {
+  renderPortfolioFilters();
+  renderPortfolio();
+  renderTestimonials();
+  renderBlog();
+  renderPricing();
+  applySitePhotos();
+  applyHeroVideo();
+  applyContent();
+  initPortfolioReveal();
+}
+
+renderAll();
 loadFromCloud().then(() => {
-  renderPortfolioFilters();
-  renderPortfolio();
-  renderTestimonials();
-  renderBlog();
-  renderPricing();
-  applySitePhotos();
-  applyHeroVideo();
-  applyContent();
-  initPortfolioReveal();
+  renderAll();
 }).catch(() => {
-  renderPortfolioFilters();
-  renderPortfolio();
-  renderTestimonials();
-  renderBlog();
-  renderPricing();
-  applySitePhotos();
-  applyHeroVideo();
-  applyContent();
-  initPortfolioReveal();
+  renderAll();
 });
 
 // ── PRELOADER ──
@@ -1276,10 +1269,6 @@ function updateCountdown() {
 updateCountdown(); setInterval(updateCountdown, 1000);
 
 // ── PORTFOLIO ──
-let portfolioItems = [];
-let lightboxItems = [];
-let currentFilter = 'all';
-let lightboxIndex = 0;
 
 function renderPortfolioFilters() {
   try {
