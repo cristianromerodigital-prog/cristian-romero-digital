@@ -1268,10 +1268,37 @@ loadFromCloud().then(() => {
 }).catch(() => {});
 
 // ── PRELOADER ──
+// Hide preloader immediately on user interaction
+function hidePreloaderNow() {
+  const p = document.getElementById('preloader');
+  if(p && !p.classList.contains('hidden')) {
+    p.classList.add('hidden');
+    dbg('preloader hidden early');
+  }
+}
+window.addEventListener('scroll', hidePreloaderNow, { once:true, passive:true });
+window.addEventListener('click', hidePreloaderNow, { once:true });
+window.addEventListener('touchstart', hidePreloaderNow, { once:true, passive:true });
+
 window.addEventListener('load', () => {
   dbg('window.load fired');
-  setTimeout(() => { document.getElementById('preloader').classList.add('hidden'); dbg('preloader hidden'); }, 1800);
+  setTimeout(() => { hidePreloaderNow(); dbg('preloader hidden by timeout'); }, 800);
 });
+
+// Hide preloader immediately on any click or scroll
+function hidePreloaderNow() {
+  const p = document.getElementById('preloader');
+  if(p && !p.classList.contains('hidden')) {
+    p.classList.add('hidden');
+    dbg('preloader hidden early — user interaction');
+  }
+}
+window.addEventListener('scroll', hidePreloaderNow, { once: true, passive: true });
+window.addEventListener('click', hidePreloaderNow, { once: true });
+window.addEventListener('touchstart', hidePreloaderNow, { once: true, passive: true });
+// Also shorten preloader time
+if(document.readyState === 'complete') {
+  setTimeout(() => { document.getElementById('preloader')?.classList.add('hidden'); }, 500);
 
 // ── CURSOR ──
 const cur = document.getElementById('cursor');
@@ -1873,6 +1900,7 @@ function applyHeroVideo() {
     if(wrap) wrap.style.display = 'block';
     section.classList.add('has-video');
   }
+}
 }
 </script>
 </body>
