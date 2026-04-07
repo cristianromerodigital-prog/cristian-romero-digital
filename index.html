@@ -511,12 +511,14 @@ footer { background:var(--paper2); border-top:1px solid var(--border); padding:8
 /* ── RESPONSIVE ── */
 @media(max-width:1024px) {
   .about,.social-section,.contact { grid-template-columns:1fr; padding:80px 40px; gap:60px; }
-  .services-grid, .pricing-grid, .blog-grid, .testimonials-grid { grid-template-columns:1fr; }
+  .services-grid { grid-template-columns:1fr !important; }
+  .pricing-grid, .blog-grid, .testimonials-grid { grid-template-columns:1fr; }
   .portfolio-grid { columns:3; column-gap:2px; }
   .portfolio-item.wide { column-span:all; }
   .footer-grid { grid-template-columns:1fr 1fr; gap:40px; }
 }
 @media(max-width:768px) {
+  .services-grid { grid-template-columns:1fr !important; }
   .topbar { padding:8px 20px; }
   nav { padding:0 20px; top:35px; }
   .nav-links { display:none; }
