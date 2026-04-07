@@ -1290,19 +1290,10 @@ function renderPortfolioFilters() {
   } catch(e) {}
 }
 
-function shuffleArray(arr) {
-  for(let i = arr.length-1; i>0; i--) {
-    const j = Math.floor(Math.random()*(i+1));
-    [arr[i],arr[j]] = [arr[j],arr[i]];
-  }
-  return arr;
-}
-
 function renderPortfolio() {
   const grid = document.getElementById('portfolio-grid');
   const empty = document.getElementById('portfolio-empty');
   let items = S.get('crd_portfolio') || [];
-  items = shuffleArray([...items]);
   const filtered = currentFilter === 'all' ? items : items.filter(i => i.category === currentFilter);
   portfolioItems = filtered;
   lightboxItems = filtered.filter(i => i.url);
