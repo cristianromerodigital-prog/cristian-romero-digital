@@ -305,7 +305,7 @@ nav.scrolled { box-shadow: 0 4px 40px rgba(0,0,0,0.5); }
 /* ── PORTFOLIO ── */
 .portfolio-section { padding:120px 80px; background:var(--paper); }
 .portfolio-header { margin-bottom:56px; }
-.portfolio-filters { display:flex; flex-wrap:wrap; gap:0; margin-bottom:48px; border:1px solid var(--border); width:fit-content; }
+.portfolio-filters { display:flex; flex-wrap:wrap; gap:0; margin:0 auto 48px; border:1px solid var(--border); width:fit-content; max-width:100%; }
 .filter-btn {
   padding:12px 28px; font-size:10.5px; letter-spacing:2px; text-transform:uppercase;
   font-weight:500; color:var(--ink2); background:none; border:none; cursor:pointer;
@@ -535,6 +535,9 @@ footer { background:var(--paper2); border-top:1px solid var(--border); padding:8
   .section-divider { margin:0 24px; }
   .hero-badge { right:0; bottom:0; }
   .social-section { padding:80px 24px; }
+  /* Filtros responsive */
+  .portfolio-filters { width:100%; border:none; }
+  .filter-btn { flex:1; min-width:120px; border:1px solid var(--border) !important; margin:2px; }
 }
 
 /* ── VIDEO HERO: pantalla completa, texto flotando abajo ── */
@@ -650,8 +653,6 @@ body::before {
   font-weight: 500;
 }
 .pricing-features li.star::before { content:'✓'; color:var(--gold); }
-
- 
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 </head>
@@ -897,11 +898,11 @@ body::before {
     <p class="section-eyebrow center">Inversión</p>
     <h2 class="section-title center">Paquetes <em>a tu medida</em></h2>
   </div>
-  <div style="display:flex;width:fit-content;margin:0 auto 32px;border:1px solid var(--border)" class="reveal">
-    <button class="pricing-tab active" onclick="switchPricing('xv',this)" style="padding:11px 24px;font-size:10.5px;letter-spacing:2px;text-transform:uppercase;font-weight:600;background:var(--ink);color:#fff;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.2s">Eventos de XV</button>
-    <button class="pricing-tab" onclick="switchPricing('boda',this)" style="padding:11px 24px;font-size:10.5px;letter-spacing:2px;text-transform:uppercase;font-weight:600;background:none;color:var(--ink2);border:none;border-left:1px solid var(--border);cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.2s">Casamientos</button>
-    <button class="pricing-tab" onclick="switchPricing('book-xv',this)" style="padding:11px 24px;font-size:10.5px;letter-spacing:2px;text-transform:uppercase;font-weight:600;background:none;color:var(--gold);border:none;border-left:1px solid var(--border);cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.2s">Book de XV</button>
-    <button class="pricing-tab" onclick="switchPricing('book-boda',this)" style="padding:11px 24px;font-size:10.5px;letter-spacing:2px;text-transform:uppercase;font-weight:600;background:none;color:var(--gold);border:none;border-left:1px solid var(--border);cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.2s">Book Pre-Boda</button>
+  <div class="portfolio-filters reveal" style="margin:0 auto 32px">
+    <button class="filter-btn active" onclick="switchPricing('xv',this)">Eventos de XV</button>
+    <button class="filter-btn" onclick="switchPricing('boda',this)">Casamientos</button>
+    <button class="filter-btn" onclick="switchPricing('book-xv',this)">Book de XV</button>
+    <button class="filter-btn" onclick="switchPricing('book-boda',this)">Book Pre-Boda</button>
   </div>
   <div class="pricing-panel reveal" id="pricing-xv">
     <div class="pricing-grid">
@@ -1430,10 +1431,9 @@ document.getElementById('post-modal').addEventListener('click', e => { if(e.targ
 
 // ── PRICING ──
 function switchPricing(tab, btn) {
-  document.querySelectorAll('.pricing-tab').forEach(t => {
-    t.style.background='none'; t.style.color='var(--ink2)';
-  });
-  btn.style.background='var(--ink)'; btn.style.color='#fff';
+  // Usar filter-btn ahora que unificamos los estilos
+  btn.parentElement.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
   document.querySelectorAll('.pricing-panel').forEach(p => p.style.display='none');
   document.getElementById('pricing-'+tab).style.display='block';
 }
