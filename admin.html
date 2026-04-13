@@ -1390,20 +1390,44 @@ let currentPage = 'dashboard';
 function showPage(id) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
-  document.getElementById('page-'+id).classList.add('active');
-  document.querySelector(`[onclick="showPage('${id}')"]`).classList.add('active');
-  const titles = { dashboard:'Dashboard', portfolio:'Portfolio', blog:'Blog', photos:'Fotos del Sitio', video:'Video Hero', content:'Contenido', messages:'Mensajes', testimonials:'Testimonios', settings:'Configuración' };
-  document.getElementById('page-title').textContent = titles[id] || id;
+
+  const page = document.getElementById('page-' + id);
+  if (page) page.classList.add('active');
+  else console.error('No existe la página:', 'page-' + id);
+
+  const navItem = document.querySelector(`[onclick="showPage('${id}')"]`);
+  if (navItem) navItem.classList.add('active');
+  else console.error('No existe item de menú para:', id);
+
+  const titles = {
+    dashboard:'Dashboard',
+    portfolio:'Portfolio',
+    blog:'Blog',
+    photos:'Fotos del Sitio',
+    video:'Video Hero',
+    content:'Contenido',
+    messages:'Mensajes',
+    testimonials:'Testimonios',
+    settings:'Configuración'
+  };
+
+  const titleEl = document.getElementById('page-title');
+  if (titleEl) titleEl.textContent = titles[id] || id;
+
   currentPage = id;
-  if (id === 'portfolio') renderPortfolioAdmin();
-  if (id === 'blog') renderBlogAdmin();
-  if (id === 'messages') renderMessages();
-  if (id === 'testimonials') renderTestimonialsAdmin();
-  if (id === 'settings') loadSettings();
-  if (id === 'dashboard') renderDashboard();
-  if (id === 'photos') renderPhotosPage();
-  if (id === 'video') loadVideoPage();
-  if (id === 'content') { loadContentPage(); setTimeout(loadDestinations, 100); }
+
+  if (id === 'portfolio' && typeof renderPortfolioAdmin === 'function') renderPortfolioAdmin();
+  if (id === 'blog' && typeof renderBlogAdmin === 'function') renderBlogAdmin();
+  if (id === 'messages' && typeof renderMessages === 'function') renderMessages();
+  if (id === 'testimonials' && typeof renderTestimonialsAdmin === 'function') renderTestimonialsAdmin();
+  if (id === 'settings' && typeof loadSettings === 'function') loadSettings();
+  if (id === 'dashboard' && typeof renderDashboard === 'function') renderDashboard();
+  if (id === 'photos' && typeof renderPhotosPage === 'function') renderPhotosPage();
+  if (id === 'video' && typeof loadVideoPage === 'function') loadVideoPage();
+  if (id === 'content') {
+    if (typeof loadContentPage === 'function') loadContentPage();
+    if (typeof loadDestinations === 'function') setTimeout(loadDestinations, 100);
+  }
 }
 
 // ── MODAL ──
