@@ -1369,12 +1369,7 @@ function doLogout() {
   document.getElementById('login-error').style.display='none';
 }
 
-// Check session
-if (S.get('crd_session') && (Date.now() - S.get('crd_session')) < 8*60*60*1000) {
-  document.getElementById('login-screen').style.display='none';
-  document.getElementById('app').classList.add('visible');
-  document.addEventListener('DOMContentLoaded', init);
-}
+// Session check handled by DOMContentLoaded listener below
 
 // ── TOAST ──
 function toast(msg, type='success') {
@@ -3271,6 +3266,7 @@ window.addEventListener('DOMContentLoaded', () => {
       document.getElementById('login-screen').style.display='none';
       document.getElementById('app').classList.add('visible');
       init();
+      showPage('dashboard');
     }
   } catch(e) { console.log('Session check error:', e); }
 });
