@@ -1329,10 +1329,25 @@ function verifyOTP() {
   if(code !== _otpCode) { if(errEl) errEl.textContent = 'Código incorrecto'; return; }
   _otpCode = null;
   localStorage.setItem('crd_session', Date.now());
-  document.getElementById('login-screen').style.display = 'none';
-  document.getElementById('app').classList.add('visible');
+
+  console.group('%c[ADMIN DEBUG] verifyOTP', 'color:#c9a84c;font-weight:bold');
+  const appEl = document.getElementById('app');
+  const loginScreen = document.getElementById('login-screen');
+  console.log('Ocultando login-screen...');
+  loginScreen.style.display = 'none';
+  console.log('Agregando clase visible a #app...');
+  appEl.classList.add('visible');
+  console.log('app.className:', appEl.className);
+  console.log('app display computed:', window.getComputedStyle(appEl).display);
+  console.log('Llamando init()...');
   init();
+  console.log('Llamando showPage("dashboard")...');
   showPage('dashboard');
+  const dashPage = document.getElementById('page-dashboard');
+  console.log('page-dashboard classList:', dashPage ? dashPage.className : 'NO ENCONTRADO');
+  console.log('page-dashboard display computed:', dashPage ? window.getComputedStyle(dashPage).display : 'N/A');
+  console.groupEnd();
+
   toast('Bienvenido ✓');
 }
 
@@ -3260,15 +3275,43 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Check session on load
 window.addEventListener('DOMContentLoaded', () => {
+  console.group('%c[ADMIN DEBUG] DOMContentLoaded', 'color:#c9a84c;font-weight:bold');
   try {
     const sess = S.get('crd_session');
+    console.log('crd_session value:', sess);
+    console.log('Date.now():', Date.now());
+    console.log('Diff (ms):', sess ? Date.now() - sess : 'N/A');
+    console.log('8h en ms:', 8*60*60*1000);
+    console.log('Sesión válida:', sess && (Date.now() - sess) < 8*60*60*1000);
+
+    const loginScreen = document.getElementById('login-screen');
+    const appEl = document.getElementById('app');
+    console.log('login-screen el:', loginScreen);
+    console.log('app el:', appEl);
+
     if (sess && (Date.now() - sess) < 8*60*60*1000) {
-      document.getElementById('login-screen').style.display='none';
-      document.getElementById('app').classList.add('visible');
+      console.log('→ Sesión activa: ocultando login, mostrando app...');
+      loginScreen.style.display='none';
+      appEl.classList.add('visible');
+      console.log('app.classList after add:', appEl.className);
+      console.log('app display computed:', window.getComputedStyle(appEl).display);
+
+      console.log('→ Llamando init()...');
       init();
+      console.log('→ init() terminó, llamando showPage("dashboard")...');
       showPage('dashboard');
+
+      const dashPage = document.getElementById('page-dashboard');
+      console.log('page-dashboard el:', dashPage);
+      console.log('page-dashboard classList:', dashPage ? dashPage.className : 'NO ENCONTRADO');
+      console.log('page-dashboard display computed:', dashPage ? window.getComputedStyle(dashPage).display : 'N/A');
+    } else {
+      console.log('→ Sin sesión válida: mostrando pantalla de login');
     }
-  } catch(e) { console.log('Session check error:', e); }
+  } catch(e) {
+    console.error('[ADMIN DEBUG] Error en session check:', e);
+  }
+  console.groupEnd();
 });
 </script>
 </body>
