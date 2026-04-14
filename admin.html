@@ -39,7 +39,7 @@ input,textarea,select{font-family:'DM Sans',sans-serif;}
 
 /* ── LAYOUT ── */
 #app{display:none;min-height:100vh;}
-#app.visible{display:flex;width:100%;min-height:100vh;}
+#app.visible{display:block;width:100%;min-height:100vh;}
 
 /* ── SIDEBAR ── */
 .sidebar{
@@ -71,7 +71,7 @@ input,textarea,select{font-family:'DM Sans',sans-serif;}
 .logout-btn:hover{color:var(--red);}
 
 /* ── MAIN ── */
-.main{margin-left:var(--sidebar);flex:1;display:flex;flex-direction:column;min-height:100vh;}
+.main{margin-left:var(--sidebar);width:calc(100% - var(--sidebar));display:flex;flex-direction:column;min-height:100vh;}
 .topbar-admin{
   background:var(--black);border-bottom:1px solid rgba(255,255,255,0.04);
   padding:16px 36px;display:flex;align-items:center;justify-content:space-between;
