@@ -39,7 +39,7 @@ input,textarea,select{font-family:'DM Sans',sans-serif;}
 
 /* ── LAYOUT ── */
 #app{display:none;min-height:100vh;}
-#app.visible{display:block;width:100%;min-height:100vh;}
+#app.visible{display:flex;}
 
 /* ── SIDEBAR ── */
 .sidebar{
@@ -71,7 +71,7 @@ input,textarea,select{font-family:'DM Sans',sans-serif;}
 .logout-btn:hover{color:var(--red);}
 
 /* ── MAIN ── */
-.main{margin-left:var(--sidebar);width:calc(100% - var(--sidebar));display:flex;flex-direction:column;min-height:100vh;}
+.main{margin-left:var(--sidebar);flex:1;display:flex;flex-direction:column;min-height:100vh;}
 .topbar-admin{
   background:var(--black);border-bottom:1px solid rgba(255,255,255,0.04);
   padding:16px 36px;display:flex;align-items:center;justify-content:space-between;
@@ -244,7 +244,6 @@ tr:hover td{background:rgba(255,255,255,0.02);}
 
 </style>
 <script src="https://upload-widget.cloudinary.com/global/all.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 </head>
 <body>
 
@@ -259,7 +258,7 @@ tr:hover td{background:rgba(255,255,255,0.02);}
     <div class="login-group">
       <label class="login-label">Usuario</label>
       <div id="login-step1">
-      <p style="font-size:12px;color:var(--gray2);text-align:center;margin-bottom:24px;letter-spacing:1px;line-height:1.8">Hacé clic para recibir un código de acceso en tu casilla de email</p>
+      <p style="font-size:12px;color:var(--gray2);text-align:center;margin-bottom:24px;letter-spacing:1px;line-height:1.8">Hacé clic para recibir un código de acceso en tu casilla registrada</p>
       <div id="login-error" class="login-error"></div>
       <button class="login-btn" onclick="requestOTP()" id="otp-request-btn">Enviar código</button>
     </div>
@@ -848,11 +847,11 @@ tr:hover td{background:rgba(255,255,255,0.02);}
           <div class="settings-section">
             <div class="settings-section-title">Datos de contacto</div>
             <div class="form-row">
-              <div class="form-group"><label class="form-label">Email de contacto</label><input class="form-input" id="cnt-email" placeholder="cristian.romero.digital@gmail.com" type="email"></div>
+              <div class="form-group"><label class="form-label">Email</label><input class="form-input" id="cnt-email" placeholder="hola@cristian.com" type="email"></div>
               <div class="form-group"><label class="form-label">Teléfono / WhatsApp</label><input class="form-input" id="cnt-phone" placeholder="+54 11 XXXX-XXXX"></div>
             </div>
             <div class="form-row">
-              <div class="form-group"><label class="form-label">Ubicación (topbar)</label><input class="form-input" id="cnt-location" placeholder="Buenos Aires, Argentina"></div>
+              <div class="form-group"><label class="form-label">Ubicación</label><input class="form-input" id="cnt-location" placeholder="Buenos Aires, Argentina"></div>
               <div class="form-group"><label class="form-label">Número WhatsApp (para botón flotante)</label><input class="form-input" id="cnt-wa-number" placeholder="5491100000000"></div>
             </div>
           </div>
@@ -1320,44 +1319,13 @@ function getCreds() {
 
 function doLogin() { requestOTP(); }
 
-function verifyOTP() {
-  const input = document.getElementById('login-otp');
-  const errEl = document.getElementById('login-error2');
-  const code = input ? input.value.trim() : '';
-  if(!_otpCode) { if(errEl) errEl.textContent = 'Pedí un código primero'; return; }
-  if(Date.now() > _otpExpiry) { if(errEl) errEl.textContent = 'El código expiró. Pedí uno nuevo.'; _otpCode=null; return; }
-  if(code !== _otpCode) { if(errEl) errEl.textContent = 'Código incorrecto'; return; }
-  _otpCode = null;
-  localStorage.setItem('crd_session', Date.now());
-
-  console.group('%c[ADMIN DEBUG] verifyOTP', 'color:#c9a84c;font-weight:bold');
-  const appEl = document.getElementById('app');
-  const loginScreen = document.getElementById('login-screen');
-  console.log('Ocultando login-screen...');
-  loginScreen.style.display = 'none';
-  console.log('Agregando clase visible a #app...');
-  appEl.classList.add('visible');
-  console.log('app.className:', appEl.className);
-  console.log('app display computed:', window.getComputedStyle(appEl).display);
-  console.log('Llamando init()...');
-  init();
-  console.log('Llamando showPage("dashboard")...');
-  showPage('dashboard');
-  const dashPage = document.getElementById('page-dashboard');
-  console.log('page-dashboard classList:', dashPage ? dashPage.className : 'NO ENCONTRADO');
-  console.log('page-dashboard display computed:', dashPage ? window.getComputedStyle(dashPage).display : 'N/A');
-  console.groupEnd();
-
-  toast('Bienvenido ✓');
-}
-
 // login listeners — wrapped so DOM is ready
 (function() {
   function attachLoginListeners() {
     const lp = document.getElementById('login-pass');
     const lu = document.getElementById('login-user');
     if (lp) lp.addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
-    if (lu) lu.addEventListener('keydown', e => { if(e.key==='Enter') { const otp=document.getElementById('login-otp'); if(otp) otp.focus(); }});
+    if (lu) lu.addEventListener('keydown', e => { if(e.key==='Enter') { const lp2=document.getElementById('login-pass'); if(lp2) lp2.focus(); }});
   }
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', attachLoginListeners);
@@ -1370,7 +1338,8 @@ function resetCredentials() {
   if (confirm('¿Restablecer usuario y contraseña a los valores por defecto?\n\nUsuario: admin\nContraseña: crd2025')) {
     localStorage.removeItem('crd_admin_creds');
     localStorage.removeItem('crd_session');
-    // OTP login — no user/pass fields to clear
+    document.getElementById('login-user').value = 'admin';
+    document.getElementById('login-pass').value = '';
     document.getElementById('login-error').style.display = 'none';
     alert('Credenciales restablecidas.\nUsuario: admin\nContraseña: crd2025');
   }
@@ -1380,11 +1349,16 @@ function doLogout() {
   S.set('crd_session', null);
   document.getElementById('app').classList.remove('visible');
   document.getElementById('login-screen').style.display='flex';
-  (document.getElementById('login-pass')||{}).value='';
+  document.getElementById('login-pass').value='';
   document.getElementById('login-error').style.display='none';
 }
 
-// Session check handled by DOMContentLoaded listener below
+// Check session
+if (S.get('crd_session') && (Date.now() - S.get('crd_session')) < 8*60*60*1000) {
+  document.getElementById('login-screen').style.display='none';
+  document.getElementById('app').classList.add('visible');
+  document.addEventListener('DOMContentLoaded', init);
+}
 
 // ── TOAST ──
 function toast(msg, type='success') {
@@ -2479,18 +2453,9 @@ function loadContentPage() {
 
   // CONTACT
   const ct = c.contact || {};
-  const contactMap = {
-    'contact-eyebrow': 'eyebrow',
-    'contact-title': 'title',
-    'contact-desc': 'desc',
-    'email': 'email',
-    'phone': 'phone',
-    'location': 'location',
-    'wa-number': 'wa_number'
-  };
-  Object.entries(contactMap).forEach(([id, key]) => {
-    const el = document.getElementById('cnt-'+id);
-    if(el) el.value = ct[key] || '';
+  ['eyebrow','title','desc','email','phone','location','wa-number'].forEach(k => {
+    const el = document.getElementById('cnt-'+k);
+    if(el) el.value = ct[k.replace('-','_')] || ct[k] || '';
   });
 
   // SOCIAL
@@ -3242,7 +3207,7 @@ async function requestOTP() {
   _otpExpiry = Date.now() + 10 * 60 * 1000; // 10 min
 
   try {
-    emailjs.init({ publicKey: EMAILJS_PK });
+    if(typeof emailjs === 'undefined') emailjs.init({ publicKey: EMAILJS_PK });
     await emailjs.send(EMAILJS_SVC, 'template_bdpe4yq', {
       name: 'Admin',
       email: ADMIN_EMAIL,
@@ -3265,53 +3230,42 @@ async function requestOTP() {
   btn.disabled = false;
 }
 
+function verifyOTP() {
+  const input = document.getElementById('login-otp');
+  const errEl = document.getElementById('login-error2');
+  const code = input ? input.value.trim() : '';
 
+  if(!_otpCode) { if(errEl) errEl.textContent = 'Pedí un código primero'; return; }
+  if(Date.now() > _otpExpiry) { if(errEl) errEl.textContent = 'El código expiró. Pedí uno nuevo.'; _otpCode=null; return; }
+  if(code !== _otpCode) { if(errEl) errEl.textContent = 'Código incorrecto'; return; }
+
+  // Valid — log in
+  _otpCode = null;
+  localStorage.setItem('crd_session', Date.now());
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('content').style.display = 'flex';
+  showPage('dashboard');
+  toast('Bienvenido ✓');
+}
 
 // Allow Enter key on OTP input
 document.addEventListener('DOMContentLoaded', () => {
   const otpInput = document.getElementById('login-otp');
   if(otpInput) otpInput.addEventListener('keydown', e => { if(e.key==='Enter') verifyOTP(); });
+  const emailInput = document.getElementById('login-email');
+  if(emailInput) emailInput.addEventListener('keydown', e => { if(e.key==='Enter') requestOTP(); });
 });
 
 // Check session on load
 window.addEventListener('DOMContentLoaded', () => {
-  console.group('%c[ADMIN DEBUG] DOMContentLoaded', 'color:#c9a84c;font-weight:bold');
   try {
     const sess = S.get('crd_session');
-    console.log('crd_session value:', sess);
-    console.log('Date.now():', Date.now());
-    console.log('Diff (ms):', sess ? Date.now() - sess : 'N/A');
-    console.log('8h en ms:', 8*60*60*1000);
-    console.log('Sesión válida:', sess && (Date.now() - sess) < 8*60*60*1000);
-
-    const loginScreen = document.getElementById('login-screen');
-    const appEl = document.getElementById('app');
-    console.log('login-screen el:', loginScreen);
-    console.log('app el:', appEl);
-
     if (sess && (Date.now() - sess) < 8*60*60*1000) {
-      console.log('→ Sesión activa: ocultando login, mostrando app...');
-      loginScreen.style.display='none';
-      appEl.classList.add('visible');
-      console.log('app.classList after add:', appEl.className);
-      console.log('app display computed:', window.getComputedStyle(appEl).display);
-
-      console.log('→ Llamando init()...');
+      document.getElementById('login-screen').style.display='none';
+      document.getElementById('app').classList.add('visible');
       init();
-      console.log('→ init() terminó, llamando showPage("dashboard")...');
-      showPage('dashboard');
-
-      const dashPage = document.getElementById('page-dashboard');
-      console.log('page-dashboard el:', dashPage);
-      console.log('page-dashboard classList:', dashPage ? dashPage.className : 'NO ENCONTRADO');
-      console.log('page-dashboard display computed:', dashPage ? window.getComputedStyle(dashPage).display : 'N/A');
-    } else {
-      console.log('→ Sin sesión válida: mostrando pantalla de login');
     }
-  } catch(e) {
-    console.error('[ADMIN DEBUG] Error en session check:', e);
-  }
-  console.groupEnd();
+  } catch(e) { console.log('Session check error:', e); }
 });
 </script>
 </body>
