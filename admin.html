@@ -1321,7 +1321,7 @@ function doLogin() {
     document.getElementById('app').classList.add('visible');
     init();
   } else {
-    const err=document.getElementById('login-error'); if(err){err.style.display='block'; err.textContent='Usuario o contraseña incorrectos. Usuario: admin / Contraseña: crd2025';}
+    const err=document.getElementById('login-error'); if(err){err.style.display='block'; err.textContent='Usuario o contraseña incorrectos.';}
     document.getElementById('login-pass').value='';
   }
 }
