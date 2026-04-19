@@ -653,6 +653,16 @@ body::before {
   font-weight: 500;
 }
 .pricing-features li.star::before { content:'✓'; color:var(--gold); }
+
+
+#navbar .logo img,
+#navbar-logo-img {
+  height: 52px !important;
+  width: auto !important;
+  max-width: 260px;
+  object-fit: contain;
+  display: block;
+}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 </head>
@@ -1771,14 +1781,40 @@ document.addEventListener('DOMContentLoaded', function(){
       const logo = localStorage.getItem('crd_site_logo');
       if (!logo) return;
 
-      const ids = ['navbar-logo-img', 'preloader-logo-img', 'footer-logo-img'];
+      const navImg = document.getElementById('navbar-logo-img');
+      const preloaderImg = document.getElementById('preloader-logo-img');
+      const footerImg = document.getElementById('footer-logo-img');
 
-      ids.forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.src = logo;
-      });
+      if (navImg) {
+        navImg.src = logo;
+        navImg.style.display = 'block';
+        navImg.style.height = '52px';
+        navImg.style.width = 'auto';
+        navImg.style.maxWidth = '100%';
+        navImg.style.objectFit = 'contain';
+        navImg.onerror = function () {
+          this.removeAttribute('src');
+          console.error('Error cargando logo en navbar');
+        };
+      }
+
+      if (preloaderImg) {
+        preloaderImg.src = logo;
+        preloaderImg.onerror = function () {
+          this.removeAttribute('src');
+          console.error('Error cargando logo en preloader');
+        };
+      }
+
+      if (footerImg) {
+        footerImg.src = logo;
+        footerImg.onerror = function () {
+          this.removeAttribute('src');
+          console.error('Error cargando logo en footer');
+        };
+      }
     } catch (e) {
-      console.warn('No se pudo aplicar el logo guardado:', e);
+      console.error('No se pudo aplicar el logo guardado:', e);
     }
   }
 
