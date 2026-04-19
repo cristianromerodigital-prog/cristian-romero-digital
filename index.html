@@ -1763,3 +1763,29 @@ document.addEventListener('DOMContentLoaded', function(){
   } catch(e) { /* si falla, queda el logo hardcodeado */ }
 });
 </script>
+
+<script>
+(function () {
+  function applyStoredLogo() {
+    try {
+      const logo = localStorage.getItem('crd_site_logo');
+      if (!logo) return;
+
+      const ids = ['navbar-logo-img', 'preloader-logo-img', 'footer-logo-img'];
+
+      ids.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.src = logo;
+      });
+    } catch (e) {
+      console.warn('No se pudo aplicar el logo guardado:', e);
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', applyStoredLogo);
+  } else {
+    applyStoredLogo();
+  }
+})();
+</script>
