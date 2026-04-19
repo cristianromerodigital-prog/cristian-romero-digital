@@ -1765,40 +1765,36 @@ function applyHeroVideo() {
 (function () {
   function applyStoredLogo() {
     try {
-      const logo = localStorage.getItem('crd_site_logo');
-      if (!logo) return;
+      const raw = localStorage.getItem('crd_site_logo');
+      if (!raw) return;
+
+      let logo;
+      try {
+        logo = JSON.parse(raw);
+      } catch {
+        logo = raw;
+      }
+
+      if (!logo || String(logo).indexOf('blob:') === 0) return;
 
       const navImg = document.getElementById('navbar-logo-img');
       const preloaderImg = document.getElementById('preloader-logo-img');
       const footerImg = document.getElementById('footer-logo-img');
 
+      [navImg, preloaderImg, footerImg].forEach(el => {
+        if (!el) return;
+        el.onerror = function () {
+          console.error('Error cargando logo:', this.id, this.src);
+        };
+        el.src = logo;
+      });
+
       if (navImg) {
-        navImg.src = logo;
         navImg.style.display = 'block';
         navImg.style.height = '52px';
         navImg.style.width = 'auto';
         navImg.style.maxWidth = '100%';
         navImg.style.objectFit = 'contain';
-        navImg.onerror = function () {
-          this.removeAttribute('src');
-          console.error('Error cargando logo en navbar');
-        };
-      }
-
-      if (preloaderImg) {
-        preloaderImg.src = logo;
-        preloaderImg.onerror = function () {
-          this.removeAttribute('src');
-          console.error('Error cargando logo en preloader');
-        };
-      }
-
-      if (footerImg) {
-        footerImg.src = logo;
-        footerImg.onerror = function () {
-          this.removeAttribute('src');
-          console.error('Error cargando logo en footer');
-        };
       }
     } catch (e) {
       console.error('No se pudo aplicar el logo guardado:', e);
