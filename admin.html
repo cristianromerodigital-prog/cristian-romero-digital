@@ -1712,10 +1712,11 @@ async function init() {
     const cloud = await fetchFromCloud('crd_settings');
     S.set('crd_settings', cloud || {availability:'Tomando fechas para 2025 y 2026',waSuffix:'+5491100000000',countdownDate:new Date(Date.now()+30*24*60*60*1000).toISOString(),countdownMsg:'Solo 2 fechas libres este mes',priceSilver:'',priceGold:'',pricePlatinum:''});
   }
-  if (!S.get('crd_invites')) {
-    const cloud = await fetchFromCloud('crd_invites');
-    S.set('crd_invites', cloud || []);
-  }
+  // Invitaciones: siempre sincronizar del cloud (fuente de verdad)
+  const cloudInvites = await fetchFromCloud('crd_invites');
+  if (cloudInvites !== null) S.set('crd_invites', cloudInvites);
+  else if (!S.get('crd_invites')) S.set('crd_invites', []);
+
   if (!localStorage.getItem('crd_inv_base')) {
     const cloud = await fetchFromCloud('crd_inv_base');
     if (cloud && typeof cloud === 'string') localStorage.setItem('crd_inv_base', cloud);
