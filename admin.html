@@ -613,6 +613,19 @@ tr:hover td{background:rgba(255,255,255,0.02);}
                 </div>
               </div>
               <div class="form-group">
+                <label class="form-label">Subtítulo del evento</label>
+                <select class="form-input" id="inv-subtitulo-preset" onchange="invApplySubtiuloPreset(this.value)">
+                  <option value="">— Elegir preset —</option>
+                  <option value="boda">Con inmensa alegría los invitamos a celebrar nuestro casamiento</option>
+                  <option value="xv">Con todo nuestro amor te invitamos a celebrar sus quince años</option>
+                  <option value="cumple">Te invitamos a compartir esta celebración especial</option>
+                  <option value="boda_civil">Nos casamos por civil y queremos que lo festejés con nosotros</option>
+                  <option value="aniv">Con alegría celebramos un nuevo aniversario junto a quienes más queremos</option>
+                  <option value="custom">✏ Personalizado…</option>
+                </select>
+                <textarea class="form-textarea" id="inv-subtitulo" style="min-height:56px;margin-top:8px" placeholder="Escribí el subtítulo aquí, o elegí un preset arriba"></textarea>
+              </div>
+              <div class="form-group">
                 <label class="form-label">Texto de presentación</label>
                 <textarea class="form-textarea" id="inv-presentacion" style="min-height:70px" placeholder="Con inmensa alegría los invitamos a celebrar..."></textarea>
               </div>
@@ -629,10 +642,11 @@ tr:hover td{background:rgba(255,255,255,0.02);}
                 </select>
               </div>
               <div class="form-group">
-                <label class="form-label">URL de Cloudinary</label>
+                <label class="form-label">Foto / Video</label>
                 <div style="display:flex;gap:8px">
                   <input class="form-input" id="inv-media-url" placeholder="https://res.cloudinary.com/..." oninput="invPreviewMedia(this.value)" style="flex:1">
-                  <button class="btn-sm" onclick="openInvCloudinary()">Subir</button>
+                  <button class="btn-sm" onclick="openInvCloudinary()" title="Subir desde PC">⬆ Subir</button>
+                  <button class="btn-sm" onclick="openInvBrowser()" title="Explorar subidos a Cloudinary" style="border-color:var(--cyan);color:var(--cyan)">☁ Explorar</button>
                 </div>
               </div>
               <img id="inv-media-preview-img" class="inv-media-preview" alt="">
@@ -1250,6 +1264,19 @@ tr:hover td{background:rgba(255,255,255,0.02);}
         </div>
       </div><!-- /page-content -->
 
+
+        <!-- Invite Media Browser Modal -->
+        <div id="inv-cloudinary-browser" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:3000;overflow-y:auto;padding:24px">
+          <div style="max-width:900px;margin:0 auto;background:var(--black2);border:1px solid rgba(255,255,255,0.1);padding:24px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+              <h3 style="font-size:14px;letter-spacing:2px;text-transform:uppercase;color:var(--white)">☁ Seleccionar media de Cloudinary</h3>
+              <button onclick="document.getElementById('inv-cloudinary-browser').style.display='none'" style="background:none;border:none;color:var(--gray);font-size:20px;cursor:pointer">✕</button>
+            </div>
+            <p style="font-size:12px;color:var(--gray);margin-bottom:16px">Hacé clic en la imagen o video para usarlo como portada de la invitación.</p>
+            <div id="inv-browser-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px"></div>
+            <div id="inv-browser-loading" style="text-align:center;padding:40px;color:var(--gray);font-size:13px">Cargando...</div>
+          </div>
+        </div>
 
         <!-- Cloudinary Browser Modal -->
         <div id="cloudinary-browser" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:2000;overflow-y:auto;padding:24px">
@@ -3628,6 +3655,8 @@ function openInviteModal(id) {
     const c = inv.config;
     document.getElementById('inv-id').value = id;
     document.getElementById('inv-tipo').value = inv.tipo || 'casamiento';
+    document.getElementById('inv-subtitulo').value = c.subtitulo_html ? c.subtitulo_html.replace(/<[^>]+>/g,'') : '';
+    document.getElementById('inv-subtitulo-preset').value = '';
     document.getElementById('inv-novios').value = c.novios || '';
     document.getElementById('inv-titulo').value = c.titulo || '';
     document.getElementById('inv-fecha-display').value = c.fecha_display || '';
@@ -3662,7 +3691,7 @@ function openInviteModal(id) {
     invTipoChange();
   } else {
     document.getElementById('inv-id').value = '';
-    ['inv-novios','inv-titulo','inv-fecha-display','inv-presentacion','inv-media-url',
+    ['inv-novios','inv-titulo','inv-subtitulo','inv-fecha-display','inv-presentacion','inv-media-url',
      'inv-ceremonia-hora','inv-ceremonia-lugar','inv-recepcion-hora','inv-recepcion-lugar',
      'inv-lugar-nombre','inv-lugar-dir','inv-lugar-maps','inv-dresscode','inv-dresscode-nota',
      'inv-alias','inv-alias-banco','inv-alias-titular','inv-cbu','inv-rsvp-limite',
@@ -3692,6 +3721,7 @@ function readInviteForm() {
     tipo: document.getElementById('inv-tipo').value,
     config: {
       tipo: document.getElementById('inv-tipo').value,
+      subtitulo_html: document.getElementById('inv-subtitulo').value.trim() || null,
       novios: document.getElementById('inv-novios').value.trim(),
       titulo: document.getElementById('inv-titulo').value.trim(),
       fecha_display: document.getElementById('inv-fecha-display').value.trim(),
@@ -3720,7 +3750,8 @@ function readInviteForm() {
       emailjs_key: 'odUJtdh1Z0U27ZkaN',
       spotify_url: document.getElementById('inv-spotify').value.trim(),
       color_esquema: document.getElementById('inv-color-esquema').value,
-      estilo_aero: document.getElementById('inv-estilo-aero').checked
+      estilo_aero: document.getElementById('inv-estilo-aero').checked,
+      logo_url: S.get('crd_site_logo') || ''
     },
     slug: document.getElementById('inv-slug').value.trim() || toSlug(document.getElementById('inv-novios').value.trim()) || 'invitacion'
   };
@@ -3818,6 +3849,59 @@ async function downloadInviteHtml(id) {
   }
 }
 
+const INV_SUBTITULO_PRESETS = {
+  boda: 'Con inmensa alegría los invitamos a celebrar nuestro <em>casamiento</em>',
+  xv: 'Con todo nuestro amor te invitamos a celebrar sus <em>quince años</em>',
+  cumple: 'Te invitamos a compartir esta <em>celebración</em> especial',
+  boda_civil: 'Nos casamos por civil y queremos que lo <em>festejés</em> con nosotros',
+  aniv: 'Con alegría celebramos un nuevo <em>aniversario</em> junto a quienes más queremos',
+};
+
+function invApplySubtiuloPreset(val) {
+  if (!val || val === 'custom') return;
+  const plain = INV_SUBTITULO_PRESETS[val] ? INV_SUBTITULO_PRESETS[val].replace(/<[^>]+>/g, '') : '';
+  document.getElementById('inv-subtitulo').value = plain;
+}
+
+async function openInvBrowser() {
+  const browser = document.getElementById('inv-cloudinary-browser');
+  const grid = document.getElementById('inv-browser-grid');
+  const loading = document.getElementById('inv-browser-loading');
+  browser.style.display = 'block';
+  grid.innerHTML = '';
+  loading.style.display = 'block';
+  loading.textContent = 'Cargando...';
+  try {
+    const res = await fetch(CF_URL + '/cloudinary_list?t=' + Date.now());
+    const data = await res.json();
+    const resources = (data.resources || []).filter(r => r.resource_type === 'video' || r.resource_type === 'image');
+    if (!resources.length) { loading.textContent = 'No se encontraron archivos. Subí primero usando ⬆ Subir.'; return; }
+    loading.style.display = 'none';
+    grid.innerHTML = resources.map(r => {
+      const isVideo = r.resource_type === 'video';
+      const thumb = isVideo
+        ? r.secure_url.replace(/\.[^.]+$/, '.jpg').replace('/upload/', '/upload/w_200,h_200,c_fill,so_1/')
+        : r.secure_url.replace('/upload/', '/upload/w_200,h_200,c_fill/');
+      return `<div onclick="selectInvMedia('${r.secure_url}','${isVideo ? 'video' : 'image'}')"
+        style="cursor:pointer;position:relative;aspect-ratio:1;overflow:hidden;background:var(--black3);border:2px solid transparent;transition:border-color 0.2s"
+        onmouseover="this.style.borderColor='var(--cyan)'" onmouseout="this.style.borderColor='transparent'">
+        <img src="${thumb}" style="width:100%;height:100%;object-fit:cover" loading="lazy">
+        ${isVideo ? '<div style="position:absolute;bottom:4px;right:4px;background:rgba(0,0,0,0.7);color:#fff;font-size:9px;padding:2px 5px;border-radius:2px">VIDEO</div>' : ''}
+      </div>`;
+    }).join('');
+  } catch(e) {
+    loading.textContent = 'Error cargando archivos. Verificá tu conexión.';
+  }
+}
+
+function selectInvMedia(url, type) {
+  document.getElementById('inv-media-url').value = url;
+  document.getElementById('inv-media-type').value = type;
+  invPreviewMedia(url, type);
+  document.getElementById('inv-cloudinary-browser').style.display = 'none';
+  toast('Media seleccionada ✓');
+}
+
 function invTipoChange() {
   const tipo = document.getElementById('inv-tipo').value;
   const esBoda = tipo === 'casamiento' || tipo === 'save_the_date';
@@ -3856,7 +3940,7 @@ function openInvCloudinary() {
     maxFiles: 1,
     resourceType: type === 'video' ? 'video' : 'image',
     folder: 'invitaciones',
-    sources: ['local', 'my_files'],
+    sources: ['local'],
     language: 'es',
     styles: {
       palette: { window:'#111111', windowBorder:'#333333', tabIcon:'#c9a84c', menuIcons:'#c9a84c', textDark:'#ffffff', textLight:'#ffffff', link:'#c9a84c', action:'#c9a84c', inactiveTabIcon:'#888888', error:'#ff4444', inProgress:'#c9a84c', complete:'#33cc77', sourceBg:'#1a1a1a' }
