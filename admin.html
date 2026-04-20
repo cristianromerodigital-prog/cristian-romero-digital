@@ -3517,10 +3517,20 @@ function getInvBaseUrl() {
   return location.href.replace(/[^/]*\.html.*$/, 'invite.html');
 }
 
-function genInviteUrl(cfg) {
+async function genInviteUrl(inv) {
+  const slug = inv.slug || toSlug(inv.config.novios || 'invitacion');
   const base = getInvBaseUrl();
-  const encoded = encodeURIComponent(btoa(unescape(encodeURIComponent(JSON.stringify(cfg)))));
-  return base + '?c=' + encoded;
+  try {
+    await fetch(CF_URL + '/invite/' + slug, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': CF_AUTH },
+      body: JSON.stringify(inv.config)
+    });
+    return base + '?i=' + slug;
+  } catch(e) {
+    const encoded = encodeURIComponent(btoa(unescape(encodeURIComponent(JSON.stringify(inv.config)))));
+    return base + '?c=' + encoded;
+  }
 }
 
 function renderInvitesPage() {
@@ -3534,15 +3544,16 @@ function renderInvitesPage() {
   }
   const tipos = { casamiento:'Casamiento', quinces:'15 Años', save_the_date:'Save the Date', otro:'Evento' };
   wrap.innerHTML = list.map(inv => {
-    const url = genInviteUrl(inv.config);
-    const urlShort = url.length > 80 ? url.substring(0, 80) + '…' : url;
+    const slug = inv.slug || toSlug(inv.config.novios || 'invitacion');
+    const base = getInvBaseUrl();
+    const url = base + '?i=' + slug;
     return `<div class="inv-card">
       <div>
         <div class="inv-card-badge">${tipos[inv.tipo] || 'Evento'}</div>
         <div class="inv-card-name">${inv.config.novios || inv.config.titulo || 'Sin título'}</div>
         <div class="inv-card-date">${inv.config.fecha_display || ''}</div>
-        <div style="font-size:11px;color:var(--gold);opacity:0.8;margin-bottom:4px">${(inv.slug || toSlug(inv.config.novios || 'invitacion'))}.html</div>
-        <div class="inv-card-url">${urlShort}</div>
+        <div style="font-size:11px;color:var(--gold);opacity:0.8;margin-bottom:4px">${slug}</div>
+        <div class="inv-card-url">${url}</div>
         <div class="inv-card-actions">
           <button class="btn-sm" onclick="copyInviteUrl('${inv.id}')">Copiar URL</button>
           <button class="btn-sm" onclick="previewInvite('${inv.id}')">Previsualizar</button>
@@ -3689,18 +3700,18 @@ function saveAndPreviewInvite() {
   renderInvitesPage();
   toast('Guardado ✓');
   const inv = list.find(i => i.id === savedId);
-  if (inv) window.open(genInviteUrl(inv.config), '_blank');
+  if (inv) genInviteUrl(inv).then(url => window.open(url, '_blank'));
 }
 
 function previewInvite(id) {
   const inv = getInvites().find(i => i.id === id);
-  if (inv) window.open(genInviteUrl(inv.config), '_blank');
+  if (inv) genInviteUrl(inv).then(url => window.open(url, '_blank'));
 }
 
 function copyInviteUrl(id) {
   const inv = getInvites().find(i => i.id === id);
   if (!inv) return;
-  navigator.clipboard.writeText(genInviteUrl(inv.config)).then(() => toast('URL copiada ✓'));
+  genInviteUrl(inv).then(url => navigator.clipboard.writeText(url).then(() => toast('URL copiada ✓')));
 }
 
 function duplicateInvite(id) {
