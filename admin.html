@@ -241,7 +241,21 @@ tr:hover td{background:rgba(255,255,255,0.02);}
 .cnt-pkg-card { background:var(--black3); border:1px solid rgba(255,255,255,0.06); padding:20px; margin-bottom:16px; }
 .cnt-pkg-title { font-size:11px; letter-spacing:2px; text-transform:uppercase; color:var(--cyan); margin-bottom:14px; }
 .cnt-item-row { display:grid; grid-template-columns:24px 1fr 90px 28px; gap:8px; margin-bottom:6px; align-items:center; transition:border-top 0.1s; }
-
+/* INVITES */
+.inv-card{background:var(--black3);border:1px solid rgba(255,255,255,0.06);padding:20px;margin-bottom:12px;display:grid;grid-template-columns:1fr auto;gap:16px;align-items:start}
+.inv-card-badge{display:inline-block;padding:3px 10px;font-size:9px;letter-spacing:2px;text-transform:uppercase;background:rgba(201,168,76,0.12);color:var(--gold);margin-bottom:8px}
+.inv-card-name{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:300;color:var(--white);margin-bottom:4px}
+.inv-card-date{font-size:11px;color:var(--gray);margin-bottom:10px}
+.inv-card-url{font-size:11px;color:var(--cyan);word-break:break-all;margin-bottom:10px;opacity:0.8}
+.inv-card-actions{display:flex;gap:6px;flex-wrap:wrap}
+.inv-card-right{display:flex;flex-direction:column;gap:6px;flex-shrink:0}
+.inv-modal-section{margin-bottom:28px;padding-bottom:28px;border-bottom:1px solid rgba(255,255,255,0.05)}
+.inv-modal-section:last-child{border-bottom:none}
+.inv-modal-section-title{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--gold);margin-bottom:16px}
+.inv-media-preview{width:100%;max-height:180px;object-fit:cover;margin-top:10px;display:none;border:1px solid rgba(255,255,255,0.06)}
+.inv-form-2col{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:640px){.inv-form-2col{grid-template-columns:1fr}.inv-card{grid-template-columns:1fr}}
+.inv-gsheet-code{background:var(--black4);border:1px solid rgba(255,255,255,0.08);padding:12px;font-size:11px;color:var(--gray2);font-family:monospace;white-space:pre;overflow-x:auto;margin:10px 0;line-height:1.6;border-radius:2px}
 </style>
 <script src="https://upload-widget.cloudinary.com/global/all.js"></script>
 </head>
@@ -310,6 +324,10 @@ tr:hover td{background:rgba(255,255,255,0.02);}
       <div class="sidebar-item" onclick="showPage('testimonials')">
         <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/></svg>
         Testimonios
+      </div>
+      <div class="sidebar-item" onclick="showPage('invites')">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+        Invitaciones
       </div>
       <div class="nav-section-label">Sistema</div>
       <div class="sidebar-item" onclick="showPage('content')">
@@ -520,6 +538,255 @@ tr:hover td{background:rgba(255,255,255,0.02);}
             <thead><tr><th>Nombre</th><th>Evento</th><th>Estrellas</th><th>Acciones</th></tr></thead>
             <tbody id="testimonials-tbody"></tbody>
           </table>
+        </div>
+      </div>
+
+      <!-- INVITACIONES -->
+      <div class="page" id="page-invites">
+        <div class="section-header">
+          <h2 class="section-h">Invitaciones</h2>
+          <button class="btn-add" onclick="openInviteModal()">+ Nueva invitación</button>
+        </div>
+        <p style="font-size:12px;color:var(--gray);margin-bottom:20px;line-height:1.7">Cada invitación genera una URL única. Creá una por evento — casamiento, 15 años, save the date. Las confirmaciones de asistencia se guardan en Google Sheets.</p>
+        <div class="settings-section" style="margin-bottom:20px">
+          <div class="settings-section-title">URL base del sitio (GitHub Pages)</div>
+          <div style="display:flex;gap:10px;align-items:flex-end">
+            <div class="form-group" style="flex:1;margin-bottom:0">
+              <label class="form-label">URL donde está alojado invite.html</label>
+              <input class="form-input" id="inv-base-url" placeholder="https://usuario.github.io/repo/invite.html" oninput="saveInvBaseUrl(this.value)">
+            </div>
+          </div>
+          <small style="font-size:11px;color:var(--gray);margin-top:6px;display:block">Las URLs generadas usarán esta dirección. Si lo dejás vacío, se usa la URL relativa (solo funciona en el mismo dispositivo).</small>
+        </div>
+        <div id="invites-list"></div>
+      </div>
+
+      <!-- INVITE MODAL -->
+      <div class="modal-bg" id="inv-modal">
+        <div class="modal" style="max-width:680px;width:100%">
+          <div class="modal-header">
+            <span id="inv-modal-title">Nueva Invitación</span>
+            <button class="modal-close" onclick="closeInviteModal()">✕</button>
+          </div>
+          <div class="modal-body" style="max-height:75vh;overflow-y:auto;padding:24px">
+            <input type="hidden" id="inv-id">
+
+            <!-- BÁSICO -->
+            <div class="inv-modal-section">
+              <div class="inv-modal-section-title">Tipo y Datos Básicos</div>
+              <div class="form-group">
+                <label class="form-label">Tipo de invitación</label>
+                <select class="form-input" id="inv-tipo">
+                  <option value="casamiento">Casamiento</option>
+                  <option value="quinces">15 Años</option>
+                  <option value="save_the_date">Save the Date</option>
+                  <option value="otro">Otro evento</option>
+                </select>
+              </div>
+              <div class="inv-form-2col">
+                <div class="form-group">
+                  <label class="form-label">Nombre(s) del evento</label>
+                  <input class="form-input" id="inv-novios" placeholder="Jazz &amp; Roberto / Valentina" oninput="autoSlug(this.value)">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Título</label>
+                  <input class="form-input" id="inv-titulo" placeholder="¡Nos casamos! / ¡Mis 15!">
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Nombre del archivo HTML (slug)</label>
+                <div style="display:flex;align-items:center;gap:6px">
+                  <input class="form-input" id="inv-slug" placeholder="jazz-roberto" style="flex:1">
+                  <span style="font-size:11px;color:var(--gray);flex-shrink:0">.html</span>
+                </div>
+                <small style="color:var(--gray);font-size:10px;margin-top:4px;display:block">Nombre del archivo a descargar. Sin espacios ni tildes. Se autogenera desde los nombres.</small>
+              </div>
+              <div class="inv-form-2col">
+                <div class="form-group">
+                  <label class="form-label">Fecha para mostrar</label>
+                  <input class="form-input" id="inv-fecha-display" placeholder="15 de Diciembre, 2024">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Fecha (para countdown)</label>
+                  <input class="form-input" type="date" id="inv-fecha-iso">
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Texto de presentación</label>
+                <textarea class="form-textarea" id="inv-presentacion" style="min-height:70px" placeholder="Con inmensa alegría los invitamos a celebrar..."></textarea>
+              </div>
+            </div>
+
+            <!-- MEDIA -->
+            <div class="inv-modal-section">
+              <div class="inv-modal-section-title">Foto o Video de Portada</div>
+              <div class="form-group">
+                <label class="form-label">Tipo de media</label>
+                <select class="form-input" id="inv-media-type" onchange="invMediaTypeChange()">
+                  <option value="image">Imagen</option>
+                  <option value="video">Video</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">URL de Cloudinary</label>
+                <div style="display:flex;gap:8px">
+                  <input class="form-input" id="inv-media-url" placeholder="https://res.cloudinary.com/..." oninput="invPreviewMedia(this.value)" style="flex:1">
+                  <button class="btn-sm" onclick="openInvCloudinary()">Subir</button>
+                </div>
+              </div>
+              <img id="inv-media-preview-img" class="inv-media-preview" alt="">
+              <video id="inv-media-preview-vid" class="inv-media-preview" muted autoplay loop playsinline></video>
+            </div>
+
+            <!-- HORARIOS -->
+            <div class="inv-modal-section">
+              <div class="inv-modal-section-title">Horarios del Evento</div>
+              <div class="inv-form-2col">
+                <div class="form-group">
+                  <label class="form-label">Horario — Ceremonia</label>
+                  <input class="form-input" id="inv-ceremonia-hora" placeholder="18:00">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Lugar — Ceremonia</label>
+                  <input class="form-input" id="inv-ceremonia-lugar" placeholder="Iglesia San José">
+                </div>
+              </div>
+              <div class="inv-form-2col">
+                <div class="form-group">
+                  <label class="form-label">Horario — Recepción / Fiesta</label>
+                  <input class="form-input" id="inv-recepcion-hora" placeholder="21:00">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Lugar — Recepción / Fiesta</label>
+                  <input class="form-input" id="inv-recepcion-lugar" placeholder="Salón El Gran Espejo">
+                </div>
+              </div>
+            </div>
+
+            <!-- LUGAR -->
+            <div class="inv-modal-section">
+              <div class="inv-modal-section-title">Lugar del Evento</div>
+              <div class="form-group">
+                <label class="form-label">Nombre del salón / lugar</label>
+                <input class="form-input" id="inv-lugar-nombre" placeholder="Salón El Gran Espejo">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Dirección completa</label>
+                <input class="form-input" id="inv-lugar-dir" placeholder="Av. del Libertador 1234, CABA">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Link de Google Maps</label>
+                <input class="form-input" id="inv-lugar-maps" placeholder="https://maps.google.com/?q=...">
+                <small style="color:var(--gray);font-size:10px;margin-top:4px;display:block">Buscá el lugar en Google Maps → Compartir → Copiar link</small>
+              </div>
+            </div>
+
+            <!-- DRESSCODE -->
+            <div class="inv-modal-section">
+              <div class="inv-modal-section-title">Dresscode</div>
+              <div class="inv-form-2col">
+                <div class="form-group">
+                  <label class="form-label">Vestimenta</label>
+                  <input class="form-input" id="inv-dresscode" placeholder="Formal / Cóctel / Smart Casual">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Aclaración (opcional)</label>
+                  <input class="form-input" id="inv-dresscode-nota" placeholder="Evitar el color blanco">
+                </div>
+              </div>
+            </div>
+
+            <!-- REGALO -->
+            <div class="inv-modal-section">
+              <div class="inv-modal-section-title">Regalo / Transferencia</div>
+              <div class="inv-form-2col">
+                <div class="form-group">
+                  <label class="form-label">Alias (Mercado Pago / banco)</label>
+                  <input class="form-input" id="inv-alias" placeholder="cristian.romero">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Banco / plataforma</label>
+                  <input class="form-input" id="inv-alias-banco" placeholder="Mercado Pago">
+                </div>
+              </div>
+              <div class="inv-form-2col">
+                <div class="form-group">
+                  <label class="form-label">Titular de la cuenta</label>
+                  <input class="form-input" id="inv-alias-titular" placeholder="Cristian Romero">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">CBU (opcional)</label>
+                  <input class="form-input" id="inv-cbu" placeholder="0000000000000000000000">
+                </div>
+              </div>
+            </div>
+
+            <!-- RSVP -->
+            <div class="inv-modal-section">
+              <div class="inv-modal-section-title">Confirmación de Asistencia (RSVP)</div>
+              <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+                <input type="checkbox" id="inv-rsvp-activo" style="accent-color:var(--gold);width:15px;height:15px">
+                <label for="inv-rsvp-activo" style="font-size:12px;color:var(--gray2);cursor:pointer">Activar formulario de RSVP</label>
+              </div>
+              <div class="inv-form-2col">
+                <div class="form-group">
+                  <label class="form-label">Confirmar antes del</label>
+                  <input class="form-input" type="date" id="inv-rsvp-limite">
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">URL del Apps Script de Google Sheets</label>
+                <input class="form-input" id="inv-gsheet-url" placeholder="https://script.google.com/macros/s/.../exec">
+                <small style="color:var(--gray);font-size:10px;margin-top:4px;display:block">Las respuestas del formulario se guardarán en tu Google Sheet.</small>
+              </div>
+              <details style="margin-top:12px">
+                <summary style="font-size:11px;color:var(--cyan);cursor:pointer;letter-spacing:1px">¿Cómo configurar Google Sheets?</summary>
+                <div style="margin-top:12px;font-size:12px;color:var(--gray2);line-height:1.8">
+                  <p style="margin-bottom:8px"><strong style="color:var(--white)">1.</strong> Creá una Google Sheet nueva para este evento.</p>
+                  <p style="margin-bottom:8px"><strong style="color:var(--white)">2.</strong> En la hoja, ir a <strong style="color:var(--white)">Extensiones → Apps Script</strong>.</p>
+                  <p style="margin-bottom:8px"><strong style="color:var(--white)">3.</strong> Reemplazá todo el código con esto:</p>
+                  <div class="inv-gsheet-code">function doPost(e){
+  var ss=SpreadsheetApp.getActiveSpreadsheet();
+  var sh=ss.getActiveSheet();
+  if(sh.getLastRow()===0)
+    sh.appendRow(['Fecha','Nombre','Apellido','Asistencia','Acompañantes','Restricciones','Mensaje','Evento']);
+  var d=JSON.parse(e.postData.contents);
+  sh.appendRow([new Date().toLocaleString('es-AR'),
+    d.nombre||'',d.apellido||'',d.asistencia||'',
+    d.acompanante||'',d.restricciones||'',d.mensaje||'',d.evento||'']);
+  return ContentService.createTextOutput(JSON.stringify({ok:true}))
+    .setMimeType(ContentService.MimeType.JSON);
+}</div>
+                  <p style="margin-bottom:8px"><strong style="color:var(--white)">4.</strong> Guardar → <strong style="color:var(--white)">Implementar → Nueva implementación</strong>.</p>
+                  <p style="margin-bottom:8px"><strong style="color:var(--white)">5.</strong> Tipo: <em>Aplicación web</em> · Ejecutar como: <em>Yo</em> · Acceso: <em>Cualquier persona</em>.</p>
+                  <p><strong style="color:var(--white)">6.</strong> Copiá la URL del deploy y pegala arriba.</p>
+                </div>
+              </details>
+              <div class="form-group" style="margin-top:16px">
+                <label class="form-label">EmailJS — Template ID (opcional, para notificación)</label>
+                <input class="form-input" id="inv-emailjs-template" placeholder="template_rsvp">
+                <small style="color:var(--gray);font-size:10px;margin-top:4px;display:block">Si lo completás, también recibirás un email por cada RSVP.</small>
+              </div>
+            </div>
+
+            <!-- SPOTIFY -->
+            <div class="inv-modal-section">
+              <div class="inv-modal-section-title">Playlist de Spotify (opcional)</div>
+              <div class="form-group">
+                <label class="form-label">Link de playlist colaborativa</label>
+                <input class="form-input" id="inv-spotify" placeholder="https://open.spotify.com/playlist/...">
+                <small style="color:var(--gray);font-size:10px;margin-top:4px;display:block">Creá una playlist colaborativa en Spotify → los invitados podrán agregar canciones.</small>
+              </div>
+            </div>
+
+          </div><!-- /modal-body -->
+          <div class="modal-footer" style="display:flex;gap:10px;flex-wrap:wrap;justify-content:space-between">
+            <button class="btn-sm" onclick="closeInviteModal()">Cancelar</button>
+            <div style="display:flex;gap:10px">
+              <button class="btn-sm" onclick="saveAndPreviewInvite()">Guardar y previsualizar</button>
+              <button class="btn-add" onclick="saveInvite()">Guardar invitación</button>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -1382,7 +1649,7 @@ function showPage(id) {
   document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
   document.getElementById('page-'+id).classList.add('active');
   document.querySelector(`[onclick="showPage('${id}')"]`).classList.add('active');
-  const titles = { dashboard:'Dashboard', portfolio:'Portfolio', blog:'Blog', photos:'Fotos del Sitio', video:'Video Hero', content:'Contenido', messages:'Mensajes', testimonials:'Testimonios', settings:'Configuración' };
+  const titles = { dashboard:'Dashboard', portfolio:'Portfolio', blog:'Blog', photos:'Fotos del Sitio', video:'Video Hero', content:'Contenido', messages:'Mensajes', testimonials:'Testimonios', settings:'Configuración', invites:'Invitaciones' };
   document.getElementById('page-title').textContent = titles[id] || id;
   currentPage = id;
   if (id === 'portfolio') renderPortfolioAdmin();
@@ -1394,6 +1661,7 @@ function showPage(id) {
   if (id === 'photos') renderPhotosPage();
   if (id === 'video') loadVideoPage();
   if (id === 'content') { loadContentPage(); setTimeout(loadDestinations, 100); }
+  if (id === 'invites') renderInvitesPage();
 }
 
 // ── MODAL ──
@@ -1402,19 +1670,38 @@ function closeModal(id) { document.getElementById(id).classList.remove('open'); 
 document.querySelectorAll('.modal-bg').forEach(m => m.addEventListener('click', e => { if(e.target===m) m.classList.remove('open'); }));
 
 // ── INIT ──
-function init() {
-  // Ensure defaults
+async function fetchFromCloud(key) {
+  try {
+    const res = await fetch(CF_URL + '/' + key, { headers: { 'Authorization': CF_AUTH } });
+    if (!res.ok) return null;
+    const data = await res.json();
+    return Array.isArray(data) || (data && typeof data === 'object') ? data : null;
+  } catch(e) { return null; }
+}
+
+async function init() {
+  // Ensure defaults — for keys not in localStorage, try cloud first
   if (!S.get('crd_testimonials')) {
-    S.set('crd_testimonials', [
+    const cloud = await fetchFromCloud('crd_testimonials');
+    S.set('crd_testimonials', cloud || [
       {id:1,name:'Familia García',event:'Quinceañera de Valentina',text:'Cristian capturó cada momento con una sensibilidad increíble. Las fotos superaron todas nuestras expectativas.',stars:5},
       {id:2,name:'Lucía y Mateo',event:'Casamiento — Noviembre 2024',text:'Desde la primera reunión supimos que era el fotógrafo indicado. El resultado fue simplemente mágico.',stars:5},
       {id:3,name:'Familia Torres',event:'Quinceañera de Sofía',text:'Profesional, creativo y muy cálido con toda la familia. Las fotos son cinematográficas, no parecen de un evento común.',stars:5}
     ]);
   }
-  if (!S.get('crd_portfolio')) S.set('crd_portfolio',[]);
-  if (!S.get('crd_posts')) S.set('crd_posts',[]);
+  if (!S.get('crd_portfolio')) {
+    const cloud = await fetchFromCloud('crd_portfolio');
+    S.set('crd_portfolio', cloud || []);
+  }
+  if (!S.get('crd_posts')) {
+    const cloud = await fetchFromCloud('crd_posts');
+    S.set('crd_posts', cloud || []);
+  }
   if (!S.get('crd_messages')) S.set('crd_messages',[]);
-  if (!S.get('crd_settings')) S.set('crd_settings',{availability:'Tomando fechas para 2025 y 2026',waSuffix:'+5491100000000',countdownDate:new Date(Date.now()+30*24*60*60*1000).toISOString(),countdownMsg:'Solo 2 fechas libres este mes',priceSilver:'',priceGold:'',pricePlatinum:''});
+  if (!S.get('crd_settings')) {
+    const cloud = await fetchFromCloud('crd_settings');
+    S.set('crd_settings', cloud || {availability:'Tomando fechas para 2025 y 2026',waSuffix:'+5491100000000',countdownDate:new Date(Date.now()+30*24*60*60*1000).toISOString(),countdownMsg:'Solo 2 fechas libres este mes',priceSilver:'',priceGold:'',pricePlatinum:''});
+  }
   updateUnreadBadge();
   renderDashboard();
 }
@@ -3200,6 +3487,307 @@ function openCloudinaryWidget() {
     });
   }
   cloudinaryWidget.open();
+}
+
+// ── INVITACIONES ──
+const INV_KEY = 'crd_invites';
+let invEditingId = null;
+let invCloudinaryWidget = null;
+
+function getInvites() {
+  try { return JSON.parse(localStorage.getItem(INV_KEY) || '[]'); } catch(e) { return []; }
+}
+function saveInvites(list) { localStorage.setItem(INV_KEY, JSON.stringify(list)); }
+
+function toSlug(str) {
+  return str.toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+function autoSlug(val) {
+  const slug = document.getElementById('inv-slug');
+  if (slug && !slug.dataset.manual) slug.value = toSlug(val);
+}
+
+function saveInvBaseUrl(val) { localStorage.setItem('crd_inv_base', val.trim()); }
+function getInvBaseUrl() {
+  const saved = (localStorage.getItem('crd_inv_base') || '').trim();
+  if (saved) return saved;
+  return location.href.replace(/[^/]*\.html.*$/, 'invite.html');
+}
+
+function genInviteUrl(cfg) {
+  const base = getInvBaseUrl();
+  const encoded = encodeURIComponent(btoa(unescape(encodeURIComponent(JSON.stringify(cfg)))));
+  return base + '?c=' + encoded;
+}
+
+function renderInvitesPage() {
+  const baseInput = document.getElementById('inv-base-url');
+  if (baseInput) baseInput.value = localStorage.getItem('crd_inv_base') || '';
+  const list = getInvites();
+  const wrap = document.getElementById('invites-list');
+  if (!list.length) {
+    wrap.innerHTML = `<div class="empty-state"><p>Todavía no creaste ninguna invitación.</p><button class="btn-add" style="margin-top:16px" onclick="openInviteModal()">+ Crear primera invitación</button></div>`;
+    return;
+  }
+  const tipos = { casamiento:'Casamiento', quinces:'15 Años', save_the_date:'Save the Date', otro:'Evento' };
+  wrap.innerHTML = list.map(inv => {
+    const url = genInviteUrl(inv.config);
+    const urlShort = url.length > 80 ? url.substring(0, 80) + '…' : url;
+    return `<div class="inv-card">
+      <div>
+        <div class="inv-card-badge">${tipos[inv.tipo] || 'Evento'}</div>
+        <div class="inv-card-name">${inv.config.novios || inv.config.titulo || 'Sin título'}</div>
+        <div class="inv-card-date">${inv.config.fecha_display || ''}</div>
+        <div style="font-size:11px;color:var(--gold);opacity:0.8;margin-bottom:4px">${(inv.slug || toSlug(inv.config.novios || 'invitacion'))}.html</div>
+        <div class="inv-card-url">${urlShort}</div>
+        <div class="inv-card-actions">
+          <button class="btn-sm" onclick="copyInviteUrl('${inv.id}')">Copiar URL</button>
+          <button class="btn-sm" onclick="previewInvite('${inv.id}')">Previsualizar</button>
+          <button class="btn-sm" onclick="openInviteModal('${inv.id}')">Editar</button>
+          <button class="btn-sm" onclick="duplicateInvite('${inv.id}')">Duplicar</button>
+          <button class="btn-sm" style="color:var(--cyan)" onclick="downloadInviteHtml('${inv.id}')">Descargar .html</button>
+          <button class="btn-sm" style="color:var(--red)" onclick="deleteInvite('${inv.id}')">Eliminar</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openInviteModal(id) {
+  invEditingId = id || null;
+  const modal = document.getElementById('inv-modal');
+  document.getElementById('inv-modal-title').textContent = id ? 'Editar Invitación' : 'Nueva Invitación';
+  if (id) {
+    const inv = getInvites().find(i => i.id === id);
+    if (!inv) return;
+    const c = inv.config;
+    document.getElementById('inv-id').value = id;
+    document.getElementById('inv-tipo').value = inv.tipo || 'casamiento';
+    document.getElementById('inv-novios').value = c.novios || '';
+    document.getElementById('inv-titulo').value = c.titulo || '';
+    document.getElementById('inv-fecha-display').value = c.fecha_display || '';
+    document.getElementById('inv-fecha-iso').value = c.fecha_iso || '';
+    document.getElementById('inv-presentacion').value = c.presentacion || '';
+    document.getElementById('inv-media-url').value = c.media_url || '';
+    document.getElementById('inv-media-type').value = c.media_type || 'image';
+    document.getElementById('inv-ceremonia-hora').value = c.ceremonia_hora || '';
+    document.getElementById('inv-ceremonia-lugar').value = c.ceremonia_lugar || '';
+    document.getElementById('inv-recepcion-hora').value = c.recepcion_hora || '';
+    document.getElementById('inv-recepcion-lugar').value = c.recepcion_lugar || '';
+    document.getElementById('inv-lugar-nombre').value = c.lugar_nombre || '';
+    document.getElementById('inv-lugar-dir').value = c.lugar_direccion || '';
+    document.getElementById('inv-lugar-maps').value = c.lugar_maps || '';
+    document.getElementById('inv-dresscode').value = c.dresscode || '';
+    document.getElementById('inv-dresscode-nota').value = c.dresscode_nota || '';
+    document.getElementById('inv-alias').value = c.alias_mp || '';
+    document.getElementById('inv-alias-banco').value = c.alias_banco || '';
+    document.getElementById('inv-alias-titular').value = c.alias_titular || '';
+    document.getElementById('inv-cbu').value = c.cbu || '';
+    document.getElementById('inv-rsvp-activo').checked = !!c.rsvp_activo;
+    document.getElementById('inv-rsvp-limite').value = c.rsvp_limite || '';
+    document.getElementById('inv-gsheet-url').value = c.gsheet_url || '';
+    document.getElementById('inv-emailjs-template').value = c.emailjs_template || '';
+    document.getElementById('inv-spotify').value = c.spotify_url || '';
+    const slugEl = document.getElementById('inv-slug');
+    slugEl.value = inv.slug || '';
+    slugEl.dataset.manual = inv.slug ? '1' : '';
+    invPreviewMedia(c.media_url, c.media_type);
+  } else {
+    document.getElementById('inv-id').value = '';
+    ['inv-novios','inv-titulo','inv-fecha-display','inv-presentacion','inv-media-url',
+     'inv-ceremonia-hora','inv-ceremonia-lugar','inv-recepcion-hora','inv-recepcion-lugar',
+     'inv-lugar-nombre','inv-lugar-dir','inv-lugar-maps','inv-dresscode','inv-dresscode-nota',
+     'inv-alias','inv-alias-banco','inv-alias-titular','inv-cbu','inv-rsvp-limite',
+     'inv-gsheet-url','inv-emailjs-template','inv-spotify','inv-slug'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) { el.value = ''; if (el.dataset) el.dataset.manual = ''; }
+    });
+    document.getElementById('inv-rsvp-activo').checked = true;
+    document.getElementById('inv-fecha-iso').value = '';
+    document.getElementById('inv-media-type').value = 'image';
+    document.getElementById('inv-tipo').value = 'casamiento';
+    ['inv-media-preview-img','inv-media-preview-vid'].forEach(id => { const el=document.getElementById(id); if(el) el.style.display='none'; });
+  }
+  modal.classList.add('open');
+}
+
+function closeInviteModal() {
+  document.getElementById('inv-modal').classList.remove('open');
+  invEditingId = null;
+}
+
+function readInviteForm() {
+  return {
+    tipo: document.getElementById('inv-tipo').value,
+    config: {
+      novios: document.getElementById('inv-novios').value.trim(),
+      titulo: document.getElementById('inv-titulo').value.trim(),
+      fecha_display: document.getElementById('inv-fecha-display').value.trim(),
+      fecha_iso: document.getElementById('inv-fecha-iso').value,
+      presentacion: document.getElementById('inv-presentacion').value.trim(),
+      media_url: document.getElementById('inv-media-url').value.trim(),
+      media_type: document.getElementById('inv-media-type').value,
+      ceremonia_hora: document.getElementById('inv-ceremonia-hora').value.trim(),
+      ceremonia_lugar: document.getElementById('inv-ceremonia-lugar').value.trim(),
+      recepcion_hora: document.getElementById('inv-recepcion-hora').value.trim(),
+      recepcion_lugar: document.getElementById('inv-recepcion-lugar').value.trim(),
+      lugar_nombre: document.getElementById('inv-lugar-nombre').value.trim(),
+      lugar_direccion: document.getElementById('inv-lugar-dir').value.trim(),
+      lugar_maps: document.getElementById('inv-lugar-maps').value.trim(),
+      dresscode: document.getElementById('inv-dresscode').value.trim(),
+      dresscode_nota: document.getElementById('inv-dresscode-nota').value.trim(),
+      alias_mp: document.getElementById('inv-alias').value.trim(),
+      alias_banco: document.getElementById('inv-alias-banco').value.trim(),
+      alias_titular: document.getElementById('inv-alias-titular').value.trim(),
+      cbu: document.getElementById('inv-cbu').value.trim(),
+      rsvp_activo: document.getElementById('inv-rsvp-activo').checked,
+      rsvp_limite: document.getElementById('inv-rsvp-limite').value,
+      gsheet_url: document.getElementById('inv-gsheet-url').value.trim(),
+      emailjs_service: 'service_35rtklk',
+      emailjs_template: document.getElementById('inv-emailjs-template').value.trim(),
+      emailjs_key: 'odUJtdh1Z0U27ZkaN',
+      spotify_url: document.getElementById('inv-spotify').value.trim()
+    },
+    slug: document.getElementById('inv-slug').value.trim() || toSlug(document.getElementById('inv-novios').value.trim()) || 'invitacion'
+  };
+}
+
+function saveInvite() {
+  const data = readInviteForm();
+  if (!data.config.novios && !data.config.titulo) { toast('Ingresá al menos un nombre o título'); return; }
+  const list = getInvites();
+  if (invEditingId) {
+    const idx = list.findIndex(i => i.id === invEditingId);
+    if (idx !== -1) { list[idx].tipo = data.tipo; list[idx].config = data.config; list[idx].slug = data.slug; }
+  } else {
+    list.unshift({ id: 'inv_' + Date.now(), tipo: data.tipo, config: data.config, slug: data.slug, created: new Date().toISOString() });
+  }
+  saveInvites(list);
+  closeInviteModal();
+  renderInvitesPage();
+  toast('Invitación guardada ✓');
+}
+
+function saveAndPreviewInvite() {
+  const data = readInviteForm();
+  if (!data.config.novios && !data.config.titulo) { toast('Ingresá al menos un nombre o título'); return; }
+  const list = getInvites();
+  let savedId;
+  if (invEditingId) {
+    savedId = invEditingId;
+    const idx = list.findIndex(i => i.id === invEditingId);
+    if (idx !== -1) { list[idx].tipo = data.tipo; list[idx].config = data.config; }
+  } else {
+    savedId = 'inv_' + Date.now();
+    list.unshift({ id: savedId, tipo: data.tipo, config: data.config, slug: data.slug, created: new Date().toISOString() });
+    invEditingId = savedId;
+  }
+  saveInvites(list);
+  renderInvitesPage();
+  toast('Guardado ✓');
+  const inv = list.find(i => i.id === savedId);
+  if (inv) window.open(genInviteUrl(inv.config), '_blank');
+}
+
+function previewInvite(id) {
+  const inv = getInvites().find(i => i.id === id);
+  if (inv) window.open(genInviteUrl(inv.config), '_blank');
+}
+
+function copyInviteUrl(id) {
+  const inv = getInvites().find(i => i.id === id);
+  if (!inv) return;
+  navigator.clipboard.writeText(genInviteUrl(inv.config)).then(() => toast('URL copiada ✓'));
+}
+
+function duplicateInvite(id) {
+  const list = getInvites();
+  const inv = list.find(i => i.id === id);
+  if (!inv) return;
+  const copy = JSON.parse(JSON.stringify(inv));
+  copy.id = 'inv_' + Date.now();
+  copy.created = new Date().toISOString();
+  copy.config.novios = (copy.config.novios || '') + ' (copia)';
+  list.unshift(copy);
+  saveInvites(list);
+  renderInvitesPage();
+  toast('Invitación duplicada ✓');
+}
+
+function deleteInvite(id) {
+  if (!confirm('¿Eliminar esta invitación? No se puede deshacer.')) return;
+  const list = getInvites().filter(i => i.id !== id);
+  saveInvites(list);
+  renderInvitesPage();
+  toast('Eliminada');
+}
+
+async function downloadInviteHtml(id) {
+  const inv = getInvites().find(i => i.id === id);
+  if (!inv) return;
+  const filename = (inv.slug || toSlug(inv.config.novios || 'invitacion')) + '.html';
+  try {
+    const res = await fetch('invite.html');
+    let html = await res.text();
+    const configJson = JSON.stringify(inv.config);
+    html = html.replace('let cfg = null;', `let cfg = ${configJson};`);
+    const blob = new Blob([html], { type: 'text/html' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = filename;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+    toast(`Descargando ${filename} ✓`);
+  } catch(e) {
+    toast('Error al generar el archivo');
+    console.error(e);
+  }
+}
+
+function invPreviewMedia(url, type) {
+  const t = type || document.getElementById('inv-media-type').value;
+  const img = document.getElementById('inv-media-preview-img');
+  const vid = document.getElementById('inv-media-preview-vid');
+  img.style.display = 'none'; vid.style.display = 'none';
+  if (!url) return;
+  if (t === 'video') { vid.src = url; vid.style.display = 'block'; }
+  else { img.src = url; img.style.display = 'block'; }
+}
+
+function invMediaTypeChange() {
+  const url = document.getElementById('inv-media-url').value;
+  const type = document.getElementById('inv-media-type').value;
+  invPreviewMedia(url, type);
+}
+
+function openInvCloudinary() {
+  const type = document.getElementById('inv-media-type').value;
+  if (!invCloudinaryWidget) {
+    invCloudinaryWidget = cloudinary.createUploadWidget({
+      cloudName: 'dqpu3yurj',
+      uploadPreset: 'crd_portfolio',
+      multiple: false,
+      maxFiles: 1,
+      resourceType: type === 'video' ? 'video' : 'image',
+      folder: 'invitaciones',
+      sources: ['local','camera','url','google_drive','dropbox'],
+      language: 'es',
+      styles: {
+        palette: { window:'#111111', windowBorder:'#333333', tabIcon:'#c9a84c', menuIcons:'#c9a84c', textDark:'#ffffff', textLight:'#ffffff', link:'#c9a84c', action:'#c9a84c', inactiveTabIcon:'#888888', error:'#ff4444', inProgress:'#c9a84c', complete:'#33cc77', sourceBg:'#1a1a1a' }
+      }
+    }, (error, result) => {
+      if (result && result.event === 'success') {
+        const url = result.info.secure_url;
+        document.getElementById('inv-media-url').value = url;
+        invPreviewMedia(url, type);
+        toast('Media subida ✓');
+      }
+    });
+  }
+  invCloudinaryWidget.open();
 }
 
 // Check session on load
