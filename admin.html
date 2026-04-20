@@ -1538,7 +1538,7 @@ tr:hover td{background:rgba(255,255,255,0.02);}
 // ── CLOUDFLARE SYNC ──
 const CF_URL = 'https://web.cristian-romero-digital.workers.dev';
 const CF_AUTH = 'crd2025';
-const CF_SYNC_KEYS = ["crd_portfolio","crd_testimonials","crd_posts","crd_settings","crd_content","crd_site_photos","crd_hero_video_url","crd_invites","crd_messages","crd_inv_base"];
+const CF_SYNC_KEYS = ["crd_portfolio","crd_testimonials","crd_posts","crd_settings","crd_content","crd_site_photos","crd_hero_video_url","crd_invites","crd_messages","crd_inv_base","crd_admin_creds"];
 
 async function syncToCloud(key, value) {
   if (!CF_SYNC_KEYS.includes(key)) return;
@@ -1611,6 +1611,7 @@ function resetCredentials() {
   if (confirm('¿Restablecer usuario y contraseña a los valores por defecto?\n\nUsuario: admin\nContraseña: crd2025')) {
     localStorage.removeItem('crd_admin_creds');
     localStorage.removeItem('crd_session');
+    syncToCloud('crd_admin_creds', 'null');
     document.getElementById('login-user').value = 'admin';
     document.getElementById('login-pass').value = '';
     document.getElementById('login-error').style.display = 'none';
@@ -1626,12 +1627,18 @@ function doLogout() {
   document.getElementById('login-error').style.display='none';
 }
 
-// Check session
-if (S.get('crd_session') && (Date.now() - S.get('crd_session')) < 8*60*60*1000) {
-  document.getElementById('login-screen').style.display='none';
-  document.getElementById('app').classList.add('visible');
-  document.addEventListener('DOMContentLoaded', init);
-}
+// Check session — load creds from cloud first if missing
+(async () => {
+  if (!S.get('crd_admin_creds')) {
+    const cloud = await fetchFromCloud('crd_admin_creds');
+    if (cloud && cloud.user && cloud.pass) S.set('crd_admin_creds', cloud);
+  }
+  if (S.get('crd_session') && (Date.now() - S.get('crd_session')) < 8*60*60*1000) {
+    document.getElementById('login-screen').style.display='none';
+    document.getElementById('app').classList.add('visible');
+    document.addEventListener('DOMContentLoaded', init);
+  }
+})();
 
 // ── TOAST ──
 function toast(msg, type='success') {
