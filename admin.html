@@ -1538,7 +1538,7 @@ tr:hover td{background:rgba(255,255,255,0.02);}
 // ── CLOUDFLARE SYNC ──
 const CF_URL = 'https://web.cristian-romero-digital.workers.dev';
 const CF_AUTH = 'crd2025';
-const CF_SYNC_KEYS = ["crd_portfolio","crd_testimonials","crd_posts","crd_settings","crd_content","crd_site_photos","crd_hero_video_url"];
+const CF_SYNC_KEYS = ["crd_portfolio","crd_testimonials","crd_posts","crd_settings","crd_content","crd_site_photos","crd_hero_video_url","crd_invites","crd_messages","crd_inv_base"];
 
 async function syncToCloud(key, value) {
   if (!CF_SYNC_KEYS.includes(key)) return;
@@ -1697,10 +1697,22 @@ async function init() {
     const cloud = await fetchFromCloud('crd_posts');
     S.set('crd_posts', cloud || []);
   }
-  if (!S.get('crd_messages')) S.set('crd_messages',[]);
+  if (!S.get('crd_messages')) {
+    const cloud = await fetchFromCloud('crd_messages');
+    S.set('crd_messages', cloud || []);
+  }
   if (!S.get('crd_settings')) {
     const cloud = await fetchFromCloud('crd_settings');
     S.set('crd_settings', cloud || {availability:'Tomando fechas para 2025 y 2026',waSuffix:'+5491100000000',countdownDate:new Date(Date.now()+30*24*60*60*1000).toISOString(),countdownMsg:'Solo 2 fechas libres este mes',priceSilver:'',priceGold:'',pricePlatinum:''});
+  }
+  if (!S.get('crd_invites')) {
+    const cloud = await fetchFromCloud('crd_invites');
+    S.set('crd_invites', cloud || []);
+  }
+  if (!localStorage.getItem('crd_inv_base')) {
+    const cloud = await fetchFromCloud('crd_inv_base');
+    if (cloud && typeof cloud === 'string') localStorage.setItem('crd_inv_base', cloud);
+    else if (cloud) localStorage.setItem('crd_inv_base', JSON.stringify(cloud));
   }
   updateUnreadBadge();
   renderDashboard();
@@ -3510,7 +3522,7 @@ function autoSlug(val) {
   if (slug && !slug.dataset.manual) slug.value = toSlug(val);
 }
 
-function saveInvBaseUrl(val) { localStorage.setItem('crd_inv_base', val.trim()); }
+function saveInvBaseUrl(val) { const v = val.trim(); localStorage.setItem('crd_inv_base', v); syncToCloud('crd_inv_base', JSON.stringify(v)); }
 function getInvBaseUrl() {
   const saved = (localStorage.getItem('crd_inv_base') || '').trim();
   if (saved) return saved;
