@@ -130,6 +130,47 @@ footer small{font-size:10px;color:rgba(255,255,255,0.15);margin-top:8px;display:
 #placeholder svg{width:60px;height:60px;color:var(--gold);opacity:0.4;margin-bottom:24px}
 #placeholder h2{font-family:'Cormorant Garamond',serif;font-size:36px;font-weight:300;margin-bottom:12px}
 #placeholder p{font-size:13px;color:var(--gray);max-width:400px;line-height:1.8}
+
+/* TEMA: BLANCO */
+.theme-blanco{--gold:#8b6914;--gold2:#a07820;--black:#f5f5f2;--black2:#eaeae5;--white:#1a1a1a;--gray:#666;--gray2:#333}
+.theme-blanco #nav{background:linear-gradient(to bottom,rgba(245,245,242,0.92),transparent)}
+.theme-blanco #nav a{color:rgba(26,26,26,0.55)}
+.theme-blanco #nav a:hover{color:var(--gold)}
+.theme-blanco #hero-overlay{background:linear-gradient(to bottom,rgba(245,245,242,0.2) 0%,rgba(245,245,242,0.4) 60%,rgba(245,245,242,0.9) 100%)}
+.theme-blanco .form-input,.theme-blanco .form-select,.theme-blanco .form-textarea{background:rgba(0,0,0,0.04);border-color:rgba(0,0,0,0.14);color:#1a1a1a}
+.theme-blanco .form-select option{background:#f5f5f2;color:#1a1a1a}
+.theme-blanco .evento-item{background:rgba(0,0,0,0.02)}
+.theme-blanco .evento-grid{border-color:rgba(139,105,20,0.2)}
+.theme-blanco .evento-item{border-right-color:rgba(139,105,20,0.12)}
+.theme-blanco #regalo{background:rgba(139,105,20,0.04);border-color:rgba(139,105,20,0.15)}
+.theme-blanco footer{border-top-color:rgba(0,0,0,0.08)}
+.theme-blanco .divider-full{background:linear-gradient(to right,transparent,rgba(139,105,20,0.25),transparent)}
+
+/* TEMA: CHAMPAGNE */
+.theme-champagne{--gold:#c4956a;--gold2:#d4a57a;--black:#f5ede0;--black2:#ece3d4;--white:#2a1f14;--gray:#7a6555;--gray2:#4a3525}
+.theme-champagne #nav{background:linear-gradient(to bottom,rgba(245,237,224,0.92),transparent)}
+.theme-champagne #nav a{color:rgba(42,31,20,0.55)}
+.theme-champagne #nav a:hover{color:var(--gold)}
+.theme-champagne #hero-overlay{background:linear-gradient(to bottom,rgba(245,237,224,0.2) 0%,rgba(245,237,224,0.4) 60%,rgba(245,237,224,0.9) 100%)}
+.theme-champagne .form-input,.theme-champagne .form-select,.theme-champagne .form-textarea{background:rgba(0,0,0,0.04);border-color:rgba(0,0,0,0.12);color:#2a1f14}
+.theme-champagne .form-select option{background:#f5ede0;color:#2a1f14}
+.theme-champagne .evento-item{background:rgba(0,0,0,0.03)}
+.theme-champagne .evento-grid{border-color:rgba(196,149,106,0.25)}
+.theme-champagne .evento-item{border-right-color:rgba(196,149,106,0.15)}
+.theme-champagne #regalo{background:rgba(196,149,106,0.05);border-color:rgba(196,149,106,0.2)}
+.theme-champagne footer{border-top-color:rgba(0,0,0,0.08)}
+.theme-champagne .divider-full{background:linear-gradient(to right,transparent,rgba(196,149,106,0.3),transparent)}
+
+/* EFECTO AERO */
+.estilo-aero #nav{backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)}
+.estilo-aero section,.estilo-aero #regalo{backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+.estilo-aero .evento-item{backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);background:rgba(255,255,255,0.05)}
+.theme-blanco.estilo-aero #nav{background:rgba(245,245,242,0.55);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)}
+.theme-blanco.estilo-aero section,.theme-blanco.estilo-aero #regalo{background:rgba(255,255,255,0.55)}
+.theme-blanco.estilo-aero .evento-item{background:rgba(255,255,255,0.6)}
+.theme-champagne.estilo-aero #nav{background:rgba(245,237,224,0.55);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)}
+.theme-champagne.estilo-aero section,.theme-champagne.estilo-aero #regalo{background:rgba(245,237,224,0.55)}
+.theme-champagne.estilo-aero .evento-item{background:rgba(245,237,224,0.6)}
 </style>
 </head>
 <body>
@@ -409,9 +450,10 @@ function renderEvento(c) {
   document.getElementById('ev-label').textContent = c.titulo || '¡Nos casamos!';
   document.getElementById('ev-title').innerHTML = c.subtitulo_html || `Con inmensa alegría los invitamos a celebrar nuestro <em>casamiento</em>`;
   document.getElementById('ev-body').textContent = c.presentacion || '';
+  const esBoda = !c.tipo || c.tipo === 'casamiento' || c.tipo === 'save_the_date';
   const items = [];
-  if (c.ceremonia_hora) items.push({ icon: 'church', label: 'Ceremonia', hora: c.ceremonia_hora, lugar: c.ceremonia_lugar || '' });
-  if (c.recepcion_hora) items.push({ icon: 'party', label: 'Recepción', hora: c.recepcion_hora, lugar: c.recepcion_lugar || '' });
+  if (esBoda && c.ceremonia_hora) items.push({ icon: 'church', label: 'Ceremonia', hora: c.ceremonia_hora, lugar: c.ceremonia_lugar || '' });
+  if (c.recepcion_hora) items.push({ icon: 'party', label: esBoda ? 'Recepción' : 'Evento', hora: c.recepcion_hora, lugar: esBoda ? (c.recepcion_lugar || '') : (c.lugar_nombre || '') });
   const grid = document.getElementById('ev-grid');
   if (items.length) {
     grid.style.marginTop = '48px';
@@ -556,6 +598,8 @@ async function init() {
     return;
   }
   document.getElementById('invite-app').style.display = 'block';
+  if (cfg.color_esquema && cfg.color_esquema !== 'negro') document.documentElement.classList.add('theme-' + cfg.color_esquema);
+  if (cfg.estilo_aero) document.documentElement.classList.add('estilo-aero');
   if (cfg.color_acento) document.documentElement.style.setProperty('--gold', cfg.color_acento);
   renderHero(cfg);
   renderEvento(cfg);
