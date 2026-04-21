@@ -4005,6 +4005,10 @@ function invMediaTypeChange() {
 
 function openInvCloudinary() {
   const type = document.getElementById('inv-media-type').value;
+  if (type === 'video') {
+    openInvVideoUpload();
+    return;
+  }
   if (invCloudinaryWidget) {
     try { invCloudinaryWidget.destroy(); } catch(e) {}
     invCloudinaryWidget = null;
@@ -4014,8 +4018,8 @@ function openInvCloudinary() {
     uploadPreset: 'crd_portfolio',
     multiple: false,
     maxFiles: 1,
-    resourceType: type === 'video' ? 'video' : 'image',
-    maxFileSize: type === 'video' ? 52428800 : 10485760,
+    resourceType: 'image',
+    maxFileSize: 10485760,
     folder: 'invitaciones',
     sources: ['local'],
     language: 'es',
@@ -4026,11 +4030,87 @@ function openInvCloudinary() {
     if (result && result.event === 'success') {
       const url = result.info.secure_url;
       document.getElementById('inv-media-url').value = url;
-      invPreviewMedia(url, type);
-      toast('Media subida ✓');
+      invPreviewMedia(url, 'image');
+      toast('Imagen subida ✓');
     }
   });
   invCloudinaryWidget.open();
+}
+
+function openInvVideoUpload() {
+  let modal = document.getElementById('inv-video-upload-modal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'inv-video-upload-modal';
+    modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:9999;display:flex;align-items:center;justify-content:center';
+    modal.innerHTML = `
+      <div style="background:#1a1a1a;border:1px solid rgba(255,255,255,0.1);padding:32px;width:90%;max-width:480px;text-align:center">
+        <div style="font-size:11px;letter-spacing:3px;color:var(--gold);margin-bottom:20px">SUBIR VIDEO</div>
+        <div id="inv-video-drop" style="border:2px dashed rgba(255,255,255,0.15);padding:40px 24px;cursor:pointer;position:relative;transition:border-color 0.2s"
+          ondragover="event.preventDefault();this.style.borderColor='var(--gold)'"
+          ondragleave="this.style.borderColor='rgba(255,255,255,0.15)'"
+          ondrop="handleInvVideoDrop(event)">
+          <input type="file" id="inv-video-file-input" accept="video/*" style="position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%" onchange="uploadInvVideo(this.files[0])">
+          <div style="font-size:32px;margin-bottom:12px;opacity:0.4">🎬</div>
+          <p style="font-size:13px;color:var(--gray2);margin-bottom:4px">Arrastrá o hacé clic para seleccionar</p>
+          <p style="font-size:10px;color:var(--gray);letter-spacing:1px">MP4, MOV — hasta 200 MB</p>
+        </div>
+        <div id="inv-video-progress-wrap" style="display:none;margin-top:20px">
+          <div style="background:#333;height:4px;border-radius:2px;overflow:hidden;margin-bottom:8px">
+            <div id="inv-video-progress-bar" style="height:100%;background:var(--gold);width:0%;transition:width 0.2s"></div>
+          </div>
+          <p id="inv-video-progress-txt" style="font-size:11px;color:var(--gray2);letter-spacing:1px">Subiendo...</p>
+        </div>
+        <button onclick="document.getElementById('inv-video-upload-modal').style.display='none'" style="margin-top:20px;background:none;border:1px solid rgba(255,255,255,0.15);color:var(--gray2);padding:8px 24px;cursor:pointer;font-size:11px;letter-spacing:2px">CANCELAR</button>
+      </div>`;
+    document.body.appendChild(modal);
+  }
+  document.getElementById('inv-video-progress-wrap').style.display = 'none';
+  document.getElementById('inv-video-progress-bar').style.width = '0%';
+  document.getElementById('inv-video-file-input').value = '';
+  modal.style.display = 'flex';
+}
+
+function handleInvVideoDrop(e) {
+  e.preventDefault();
+  e.currentTarget.style.borderColor = 'rgba(255,255,255,0.15)';
+  const file = e.dataTransfer.files[0];
+  if (file && file.type.startsWith('video/')) uploadInvVideo(file);
+}
+
+function uploadInvVideo(file) {
+  if (!file) return;
+  if (file.size > 209715200) { toast('El video supera 200 MB','error'); return; }
+  document.getElementById('inv-video-progress-wrap').style.display = 'block';
+  const bar = document.getElementById('inv-video-progress-bar');
+  const txt = document.getElementById('inv-video-progress-txt');
+  const fd = new FormData();
+  fd.append('file', file);
+  fd.append('upload_preset', 'crd_portfolio');
+  fd.append('folder', 'invitaciones');
+  const xhr = new XMLHttpRequest();
+  xhr.open('POST', 'https://api.cloudinary.com/v1_1/dqpu3yurj/video/upload');
+  xhr.upload.onprogress = e => {
+    if (e.lengthComputable) {
+      const pct = Math.round(e.loaded / e.total * 100);
+      bar.style.width = pct + '%';
+      txt.textContent = `Subiendo... ${pct}%`;
+    }
+  };
+  xhr.onload = () => {
+    const res = JSON.parse(xhr.responseText);
+    if (res.secure_url) {
+      document.getElementById('inv-media-url').value = res.secure_url;
+      invPreviewMedia(res.secure_url, 'video');
+      document.getElementById('inv-video-upload-modal').style.display = 'none';
+      toast('Video subido ✓');
+    } else {
+      txt.textContent = 'Error: ' + (res.error?.message || 'no se pudo subir');
+      txt.style.color = '#e55';
+    }
+  };
+  xhr.onerror = () => { txt.textContent = 'Error de red'; txt.style.color = '#e55'; };
+  xhr.send(fd);
 }
 
 // Check session on load
