@@ -172,9 +172,7 @@ footer small{font-size:10px;color:rgba(255,255,255,0.15);margin-top:8px;display:
 .theme-champagne.estilo-aero section,.theme-champagne.estilo-aero #regalo{background:rgba(245,237,224,0.55)}
 .theme-champagne.estilo-aero .evento-item{background:rgba(245,237,224,0.6)}
 /* LOGO FOOTER */
-#footer-logo{display:none;margin:0 auto 16px;max-height:48px;max-width:160px;object-fit:contain;filter:brightness(0) invert(1)}
-.theme-blanco #footer-logo{filter:brightness(0)}
-.theme-champagne #footer-logo{filter:brightness(0) sepia(1) saturate(0.6)}
+#footer-logo{display:none;margin:16px auto 12px;max-height:56px;max-width:180px;object-fit:contain}
 </style>
 </head>
 <body>
@@ -345,9 +343,9 @@ footer small{font-size:10px;color:rgba(255,255,255,0.15);margin-top:8px;display:
 </section>
 
 <footer>
-  <img id="footer-logo" style="max-height:48px;max-width:160px;object-fit:contain;margin-bottom:16px;display:none" alt="Logo">
   <p id="footer-names"></p>
-  <small>Invitación digital · Cristian Romero Digital</small>
+  <img id="footer-logo" alt="Logo">
+  <small>Invitación digital · <a href="https://www.cristianromerodigital.ar" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;text-underline-offset:3px">Cristian Romero Digital</a> · <a href="https://www.instagram.com/cristian.romero.digital" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;text-underline-offset:3px">@cristian.romero.digital</a></small>
 </footer>
 
 </div><!-- /invite-app -->
@@ -666,7 +664,10 @@ async function init() {
   renderRSVP(cfg);
   renderSpotify(cfg);
   renderNav(cfg);
-  const logoSrc = cfg.logo_url || localStorage.getItem('crd_site_logo');
+  const isLight = cfg.color_esquema === 'blanco' || cfg.color_esquema === 'champagne';
+  const logoSrc = isLight
+    ? (cfg.logo_light || localStorage.getItem('crd_site_logo_light') || cfg.logo_dark || localStorage.getItem('crd_site_logo'))
+    : (cfg.logo_dark || localStorage.getItem('crd_site_logo') || cfg.logo_light || localStorage.getItem('crd_site_logo_light'));
   if (logoSrc) { const el = document.getElementById('footer-logo'); el.src = logoSrc; el.style.display = 'block'; }
 }
 
