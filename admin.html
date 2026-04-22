@@ -1618,12 +1618,8 @@ tr:hover td{background:rgba(255,255,255,0.02);}
   </div>
 </div>
 
-<!-- ══════════════════════════════════════════════════════ -->
-<!-- PAGE: CONTRATOS                                       -->
-<!-- ══════════════════════════════════════════════════════ -->
-<div style="display:none" id="page-contratos-placeholder">
-  <!-- injected by JS on first load to keep initial HTML lean -->
-</div>
+<!-- PAGE: CONTRATOS (contenido inyectado lazy por _ctBuildPage) -->
+<div class="page" id="page-contratos"></div>
 
 <script>
 
@@ -4196,12 +4192,8 @@ function initContratosPage() {
 }
 
 function _ctBuildPage() {
-  // Inyecta el page div en el DOM (lazy para no pesar el HTML inicial)
-  const main = document.querySelector('.content');
-  const div  = document.createElement('div');
-  div.className = 'page';
-  div.id        = 'page-contratos';
-  div.innerHTML = `
+  // Rellena el div placeholder que ya existe en el HTML
+  document.getElementById('page-contratos').innerHTML = `
     <div class="section-header">
       <div>
         <h2 class="section-h">Contratos</h2>
@@ -4423,8 +4415,6 @@ function _ctBuildPage() {
       </div>
     </div>
   `;
-  // Registrar el div como .page en el content area
-  document.querySelector('.content').appendChild(div);
 }
 
 function ctToggleCfg() {
