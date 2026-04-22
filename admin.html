@@ -1744,6 +1744,7 @@ function showPage(id) {
   document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
   document.getElementById('page-'+id).classList.add('active');
   document.querySelector(`[onclick="showPage('${id}')"]`).classList.add('active');
+  window.scrollTo(0, 0);
   const titles = { dashboard:'Dashboard', portfolio:'Portfolio', blog:'Blog', photos:'Fotos del Sitio', video:'Video Hero', content:'Contenido', messages:'Mensajes', testimonials:'Testimonios', settings:'Configuración', invites:'Invitaciones', contratos:'Contratos' };
   document.getElementById('page-title').textContent = titles[id] || id;
   currentPage = id;
@@ -4192,7 +4193,6 @@ function initContratosPage() {
 }
 
 function _ctBuildPage() {
-  // Rellena el div placeholder que ya existe en el HTML
   document.getElementById('page-contratos').innerHTML = `
     <div class="section-header">
       <div>
@@ -4415,6 +4415,7 @@ function _ctBuildPage() {
       </div>
     </div>
   `;
+  window.scrollTo(0, 0);
 }
 
 function ctToggleCfg() {
