@@ -1554,6 +1554,17 @@ tr:hover td{background:rgba(255,255,255,0.02);}
         </div>
       </div>
 
+      <!-- HISTORIAL -->
+      <div class="settings-section" style="margin-top:32px">
+        <div class="settings-section-title" style="cursor:pointer;user-select:none;display:flex;justify-content:space-between;align-items:center" onclick="ctToggleHistorial()">
+          <span>Historial de Contratos</span>
+          <span id="ct-hist-arrow" style="font-size:10px;color:var(--gray)">▼</span>
+        </div>
+        <div id="ct-hist-body" style="display:none;margin-top:14px">
+          <div id="ct-hist-list"><div style="color:var(--gray);font-size:12px">Cargando...</div></div>
+        </div>
+      </div>
+
     </div><!-- /content -->
   </div><!-- /main -->
 </div><!-- /app -->
@@ -4783,6 +4794,76 @@ async function ctGenerar() {
     document.getElementById('ct-btn-gen').disabled = false;
     toast('Error de conexión con Apps Script', 'error');
   }
+}
+
+// ── HISTORIAL ──
+let ctHistLoaded = false;
+
+function ctToggleHistorial() {
+  const body  = document.getElementById('ct-hist-body');
+  const arrow = document.getElementById('ct-hist-arrow');
+  const open  = body.style.display === 'none';
+  body.style.display = open ? 'block' : 'none';
+  arrow.textContent  = open ? '▲' : '▼';
+  if (open && !ctHistLoaded) ctLoadHistorial();
+}
+
+async function ctLoadHistorial() {
+  const url = ctGetUrl();
+  if (!url) { document.getElementById('ct-hist-list').innerHTML = '<div style="color:var(--gray);font-size:12px">Configurá la URL del Apps Script primero.</div>'; return; }
+  try {
+    const res  = await fetch(url + '?action=getContratos');
+    const data = await res.json();
+    ctHistLoaded = true;
+    ctRenderHistorial(data);
+  } catch(e) {
+    document.getElementById('ct-hist-list').innerHTML = '<div style="color:var(--red);font-size:12px">Error cargando historial.</div>';
+  }
+}
+
+function ctRenderHistorial(data) {
+  const el = document.getElementById('ct-hist-list');
+  if (!data.length) { el.innerHTML = '<div style="color:var(--gray);font-size:12px">No hay contratos registrados.</div>'; return; }
+  const rows = data.slice().reverse().map(c => `
+    <tr style="border-bottom:1px solid rgba(255,255,255,0.04)">
+      <td style="padding:8px 10px;font-size:12px;color:var(--gold);white-space:nowrap">${c.numero}</td>
+      <td style="padding:8px 10px;font-size:11px;color:var(--gray);letter-spacing:1px">${c.tipo}</td>
+      <td style="padding:8px 10px;font-size:12px;color:var(--white)">${c.cliente}${c.cliente2 ? ' / '+c.cliente2 : ''}</td>
+      <td style="padding:8px 10px;font-size:11px;color:var(--gray)">${c.fechaEvento}</td>
+      <td style="padding:8px 10px;font-size:12px;color:var(--green);white-space:nowrap">${ctFmt(c.precio)}</td>
+      <td style="padding:8px 10px;white-space:nowrap">
+        ${c.docUrl ? `<a href="${c.docUrl}" target="_blank" style="font-size:10px;color:var(--gold);text-decoration:none;margin-right:8px">DOC</a>` : ''}
+        ${c.pdfUrl ? `<a href="${c.pdfUrl}" target="_blank" style="font-size:10px;color:var(--red);text-decoration:none;margin-right:8px">PDF</a>` : ''}
+        <button onclick="ctDeleteContrato('${c.numero}')" style="font-size:10px;background:rgba(224,85,85,0.1);border:1px solid rgba(224,85,85,0.3);color:var(--red);padding:3px 8px;cursor:pointer">Borrar</button>
+      </td>
+    </tr>`).join('');
+  el.innerHTML = `<table style="width:100%;border-collapse:collapse">
+    <thead><tr style="border-bottom:1px solid rgba(255,255,255,0.08)">
+      <th style="padding:6px 10px;font-size:9px;letter-spacing:2px;color:var(--gray);text-align:left;text-transform:uppercase">N°</th>
+      <th style="padding:6px 10px;font-size:9px;letter-spacing:2px;color:var(--gray);text-align:left;text-transform:uppercase">Tipo</th>
+      <th style="padding:6px 10px;font-size:9px;letter-spacing:2px;color:var(--gray);text-align:left;text-transform:uppercase">Cliente</th>
+      <th style="padding:6px 10px;font-size:9px;letter-spacing:2px;color:var(--gray);text-align:left;text-transform:uppercase">Evento</th>
+      <th style="padding:6px 10px;font-size:9px;letter-spacing:2px;color:var(--gray);text-align:left;text-transform:uppercase">Precio</th>
+      <th style="padding:6px 10px;font-size:9px;letter-spacing:2px;color:var(--gray);text-align:left;text-transform:uppercase">Acciones</th>
+    </tr></thead>
+    <tbody>${rows}</tbody>
+  </table>`;
+}
+
+async function ctDeleteContrato(numero) {
+  if (!confirm('¿Borrar contrato ' + numero + '? Esto eliminará el Doc y PDF de Drive.')) return;
+  const url = ctGetUrl();
+  try {
+    const res  = await fetch(url, { method: 'POST', body: JSON.stringify({ action: 'deleteContrato', numero }) });
+    const json = await res.json();
+    if (json.ok) {
+      toast('Contrato ' + numero + ' eliminado');
+      ctHistLoaded = false;
+      ctLoadHistorial();
+    } else {
+      toast('Error: ' + json.error, 'error');
+    }
+  } catch(e) { toast('Error de conexión', 'error'); }
 }
 
 // Check session on load
