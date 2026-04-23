@@ -1554,6 +1554,18 @@ tr:hover td{background:rgba(255,255,255,0.02);}
         </div>
       </div>
 
+      <!-- SOLICITUDES -->
+      <div class="settings-section" style="margin-top:32px;margin-bottom:16px">
+        <div class="settings-section-title" style="display:flex;justify-content:space-between;align-items:center">
+          <span>Solicitudes de clientes <span id="ct-sol-badge" style="display:none;background:var(--gold);color:var(--black);font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;margin-left:8px"></span></span>
+          <button class="btn-sm btn-sec" onclick="ctRefreshSolicitudes()" style="font-size:9px;letter-spacing:1.5px">↻ Actualizar</button>
+        </div>
+        <div style="margin-top:6px;font-size:10px;color:var(--gray)">
+          Link del formulario para clientes: <span id="ct-form-url" style="color:var(--cyan);word-break:break-all"></span>
+        </div>
+        <div id="ct-sol-list" style="margin-top:14px"><div style="color:var(--gray);font-size:12px">Cargando...</div></div>
+      </div>
+
       <!-- HISTORIAL -->
       <div class="settings-section" style="margin-top:32px">
         <div class="settings-section-title" style="cursor:pointer;user-select:none;display:flex;justify-content:space-between;align-items:center" onclick="ctToggleHistorial()">
@@ -4403,6 +4415,7 @@ function initContratosPage() {
   if (saved && saved.url) document.getElementById('ct-apps-url').value = saved.url;
   document.getElementById('ct-dia-firma').valueAsDate = new Date();
   if (ctSvcData.length === 0 && ctGetUrl()) ctCargarServicios();
+  ctInitSolicitudes();
 }
 
 function _ctBuildPage_UNUSED() {
@@ -4794,6 +4807,103 @@ async function ctGenerar() {
     document.getElementById('ct-btn-gen').disabled = false;
     toast('Error de conexión con Apps Script', 'error');
   }
+}
+
+// ── SOLICITUDES ──
+
+function ctInitSolicitudes() {
+  const url = ctGetUrl();
+  if (!url) return;
+  const formUrl = url.replace('/exec', '/exec') + '?action=form';
+  const el = document.getElementById('ct-form-url');
+  if (el) el.textContent = url + '?action=form';
+  ctRefreshSolicitudes();
+}
+
+async function ctRefreshSolicitudes() {
+  const url = ctGetUrl();
+  if (!url) { document.getElementById('ct-sol-list').innerHTML = '<div style="color:var(--gray);font-size:12px">Configurá la URL del Apps Script primero.</div>'; return; }
+  try {
+    const res  = await fetch(url + '?action=getSolicitudes');
+    const data = await res.json();
+    ctRenderSolicitudes(data);
+  } catch(e) {
+    document.getElementById('ct-sol-list').innerHTML = '<div style="color:var(--red);font-size:12px">Error cargando solicitudes.</div>';
+  }
+}
+
+function ctRenderSolicitudes(data) {
+  const badge = document.getElementById('ct-sol-badge');
+  if (data.length > 0) { badge.textContent = data.length; badge.style.display = 'inline'; }
+  else badge.style.display = 'none';
+
+  const el = document.getElementById('ct-sol-list');
+  if (!data.length) { el.innerHTML = '<div style="color:var(--gray);font-size:12px">No hay solicitudes pendientes.</div>'; return; }
+
+  el.innerHTML = data.map(s => `
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 14px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);margin-bottom:8px">
+      <div>
+        <span style="font-size:9px;letter-spacing:2px;color:var(--gold);text-transform:uppercase;margin-right:10px">${s.tipo}</span>
+        <span style="font-size:13px;color:var(--white)">${s.cliente}</span>
+        <span style="font-size:10px;color:var(--gray);margin-left:10px">${s.fecha}</span>
+      </div>
+      <button onclick="ctCargarSolicitud(${JSON.stringify(s).replace(/"/g,'&quot;')})" style="font-size:9px;letter-spacing:1.5px;background:var(--gold);color:var(--black);border:none;padding:6px 14px;cursor:pointer;font-weight:700;text-transform:uppercase">Cargar</button>
+    </div>`).join('');
+}
+
+async function ctCargarSolicitud(sol) {
+  const d = sol.data;
+  ctSelTipo(sol.tipo);
+
+  if (sol.tipo === 'BODA') {
+    const set = (id, val) => { const el = document.getElementById(id); if (el && val) el.value = val; };
+    set('ct-b-novia-nombre', d.novia?.nombre);
+    set('ct-b-novia-dni',    d.novia?.dni);
+    set('ct-b-novia-tel',    d.novia?.telefono);
+    set('ct-b-novia-email',  d.novia?.email);
+    set('ct-b-novio-nombre', d.novio?.nombre);
+    set('ct-b-novio-dni',    d.novio?.dni);
+    set('ct-b-novio-dom',    d.novio?.domicilio);
+    set('ct-b-novio-tel',    d.novio?.telefono);
+    set('ct-b-novio-email',  d.novio?.email);
+    set('ct-b-fiesta-fecha', d.fiesta?.fecha);
+    set('ct-b-fiesta-salon', d.fiesta?.salon);
+    set('ct-b-fiesta-dir',   d.fiesta?.direccion);
+    set('ct-b-contacto-nombre', d.contacto?.nombre);
+    set('ct-b-contacto-rel',    d.contacto?.relacion);
+    set('ct-b-contacto-tel',    d.contacto?.telefono);
+  } else if (sol.tipo === 'XV') {
+    const set = (id, val) => { const el = document.getElementById(id); if (el && val) el.value = val; };
+    set('ct-x-quince-nombre', d.quinceanera?.nombre);
+    set('ct-x-quince-nac',    d.quinceanera?.fechaNacimiento);
+    set('ct-x-cliente-nombre', d.cliente?.nombre);
+    set('ct-x-cliente-dni',    d.cliente?.dni);
+    set('ct-x-cliente-tel',    d.cliente?.telefono);
+    set('ct-x-cliente-email',  d.cliente?.email);
+    set('ct-x-fecha',          d.evento?.fecha);
+    set('ct-x-hora-inicio',    d.evento?.horaInicio);
+    set('ct-x-salon',          d.evento?.salon);
+    set('ct-x-dir',            d.evento?.direccion);
+    set('ct-x-invitados',      d.evento?.invitados);
+  } else if (sol.tipo === 'CUMPLE') {
+    const set = (id, val) => { const el = document.getElementById(id); if (el && val) el.value = val; };
+    set('ct-c-nombre',     d.cliente?.nombre);
+    set('ct-c-dni',        d.cliente?.dni);
+    set('ct-c-tel',        d.cliente?.telefono);
+    set('ct-c-email',      d.cliente?.email);
+    set('ct-c-fecha',      d.evento?.fecha);
+    set('ct-c-hora-inicio',d.evento?.horaInicio);
+    set('ct-c-salon',      d.evento?.salon);
+    set('ct-c-dir',        d.evento?.direccion);
+    set('ct-c-invitados',  d.evento?.invitados);
+  }
+
+  // Marcar como usada en background
+  const url = ctGetUrl();
+  if (url) fetch(url, { method:'POST', body: JSON.stringify({ action:'marcarSolicitudUsada', id: sol.id }) }).catch(()=>{});
+
+  toast('Datos cargados del cliente — completá precio y servicios');
+  document.getElementById('ct-form-area').scrollIntoView({ behavior: 'smooth' });
 }
 
 // ── HISTORIAL ──
