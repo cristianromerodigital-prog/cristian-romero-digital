@@ -1536,7 +1536,7 @@ tr:hover td{background:rgba(255,255,255,0.02);}
             <div style="margin-top:12px">
               <div class="form-group" style="margin-bottom:12px">
                 <label class="form-label">Monto total (podés modificarlo)</label>
-                <input class="form-input" type="number" id="ct-precio" placeholder="0" oninput="ctCalcTotal()">
+                <input class="form-input" type="number" id="ct-precio" placeholder="0" oninput="ctCalcTotal(true)">
               </div>
               <div style="background:rgba(201,168,76,0.05);border:1px solid rgba(201,168,76,0.2);padding:14px;display:flex;justify-content:space-between;align-items:center">
                 <span style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--gray)">Total del contrato</span>
@@ -4633,7 +4633,7 @@ function _ctBuildPage_UNUSED() {
         <div style="margin-top:12px">
           <div class="form-group" style="margin-bottom:12px">
             <label class="form-label">Monto total (podés modificarlo)</label>
-            <input class="form-input" type="number" id="ct-precio" placeholder="0" oninput="ctCalcTotal()">
+            <input class="form-input" type="number" id="ct-precio" placeholder="0" oninput="ctCalcTotal(true)">
           </div>
           <div style="background:rgba(201,168,76,0.05);border:1px solid rgba(201,168,76,0.2);padding:14px;display:flex;justify-content:space-between;align-items:center">
             <span style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--gray)">Total del contrato</span>
@@ -4743,7 +4743,7 @@ function ctToggleEvento(tipo, visible) {
   if (el) el.style.display = visible ? 'block' : 'none';
 }
 
-function ctCalcTotal() {
+function ctCalcTotal(fromManual) {
   let suma = 0;
   ctSvcData.forEach(s => {
     const cb = document.getElementById(`ct-svc-${s.id}`);
@@ -4751,15 +4751,14 @@ function ctCalcTotal() {
   });
   const manualEl = document.getElementById('ct-precio');
   if (!manualEl) return;
-  const manual = manualEl.value;
-  const total  = manual ? Number(manual) : suma;
-  if (!manual && suma > 0) manualEl.value = suma;
+  const total = fromManual ? (Number(manualEl.value) || suma) : suma;
+  if (!fromManual) manualEl.value = suma || '';
   const disp = document.getElementById('ct-total-display');
-  if (disp) disp.textContent = ctFmt(total || suma);
+  if (disp) disp.textContent = ctFmt(total);
   const cuotas = ctTipo === 'XV' ? Number(document.getElementById('ct-x-cuotas')?.value || 1)
                : ctTipo === 'CUMPLE' ? Number(document.getElementById('ct-c-cuotas')?.value || 1) : 1;
   const cuotaVal = document.getElementById('ct-cuota-val');
-  if (cuotaVal && cuotas > 1) cuotaVal.value = ctFmt(Math.round((total || suma) / cuotas));
+  if (cuotaVal && cuotas > 1) cuotaVal.value = ctFmt(Math.round(total / cuotas));
 }
 
 function ctFmt(n) {
