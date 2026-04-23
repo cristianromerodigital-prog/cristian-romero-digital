@@ -4693,7 +4693,7 @@ function ctCargarServicios() {
   const grid = document.getElementById('ct-svc-grid');
   if (!grid) return;
   grid.innerHTML = '<div style="color:var(--gray);font-size:12px;grid-column:1/-1">Cargando...</div>';
-  fetch(url + '?action=getServicios', { redirect: 'follow' })
+  fetch(url, { method:'POST', redirect:'follow', body: JSON.stringify({action:'getServicios'}) })
     .then(r => r.json())
     .then(data => ctRenderServicios(data))
     .catch(err => {
@@ -4708,8 +4708,11 @@ function ctRenderServicios(data) {
   grid.innerHTML = '';
   data.forEach(s => {
     const d = document.createElement('div');
-    d.style.cssText = 'display:flex;align-items:flex-start;gap:8px;padding:8px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.05)';
-    d.innerHTML = `<input type="checkbox" id="ct-svc-${s.id}" value="${s.id}" style="accent-color:#666;margin-top:2px;flex-shrink:0;pointer-events:none;opacity:0.5"><div><div style="font-size:11px;color:var(--gray2);line-height:1.4">[${s.id}] ${s.descripcion}</div>${s.pesos > 0 ? `<div style="font-size:10px;color:var(--green);margin-top:2px">${ctFmt(s.pesos)}</div>` : ''}</div>`;
+    d.style.cssText = 'display:flex;align-items:flex-start;gap:8px;padding:8px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.05);cursor:pointer;transition:border-color 0.15s';
+    d.innerHTML = `<input type="checkbox" id="ct-svc-${s.id}" value="${s.id}" style="accent-color:var(--gold);margin-top:2px;flex-shrink:0" onchange="ctCalcTotal()"><div><div style="font-size:11px;color:var(--gray2);line-height:1.4">[${s.id}] ${s.descripcion}</div>${s.pesos > 0 ? `<div style="font-size:10px;color:var(--green);margin-top:2px">${ctFmt(s.pesos)}</div>` : ''}</div>`;
+    d.onclick = e => { if (e.target.tagName !== 'INPUT') { const cb = d.querySelector('input'); cb.checked = !cb.checked; ctCalcTotal(); } };
+    d.onmouseenter = () => d.style.borderColor = 'rgba(201,168,76,0.3)';
+    d.onmouseleave = () => d.style.borderColor = 'rgba(255,255,255,0.05)';
     grid.appendChild(d);
   });
 }
@@ -4729,7 +4732,7 @@ function ctSelTipo(tipo) {
   if (cuotaBox) cuotaBox.style.display = (tipo === 'XV') ? 'block' : 'none';
   const url = ctGetUrl();
   if (url) {
-    fetch(`${url}?action=nextNumber&tipo=${tipo}`, { redirect: 'follow' })
+    fetch(url, { method:'POST', redirect:'follow', body: JSON.stringify({action:'nextNumber', tipo}) })
       .then(r => r.json())
       .then(n => {
         document.getElementById('ct-num-val').textContent = n;
@@ -4913,7 +4916,7 @@ async function ctRefreshSolicitudes() {
   const url = ctGetUrl();
   if (!url) { document.getElementById('ct-sol-list').innerHTML = '<div style="color:var(--gray);font-size:12px">Configurá la URL del Apps Script primero.</div>'; return; }
   try {
-    const res  = await fetch(url + '?action=getSolicitudes', { redirect: 'follow' });
+    const res  = await fetch(url, { method:'POST', redirect:'follow', body: JSON.stringify({action:'getSolicitudes'}) });
     const data = await res.json();
     ctRenderSolicitudes(data);
   } catch(e) {
@@ -5014,7 +5017,7 @@ async function ctLoadHistorial() {
   const url = ctGetUrl();
   if (!url) { document.getElementById('ct-hist-list').innerHTML = '<div style="color:var(--gray);font-size:12px">Configurá la URL del Apps Script primero.</div>'; return; }
   try {
-    const res  = await fetch(url + '?action=getContratos', { redirect: 'follow' });
+    const res  = await fetch(url, { method:'POST', redirect:'follow', body: JSON.stringify({action:'getContratos'}) });
     const data = await res.json();
     ctHistLoaded = true;
     ctHistData   = data;
