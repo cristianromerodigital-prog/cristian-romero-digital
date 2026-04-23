@@ -1544,7 +1544,14 @@ tr:hover td{background:rgba(255,255,255,0.02);}
               </div>
             </div>
           </div>
-          <button class="btn-add" id="ct-btn-gen" onclick="ctGenerar()" style="width:100%;padding:16px;font-size:11px;letter-spacing:3px">GENERAR CONTRATO</button>
+          <div id="ct-draft-banner" style="display:none;margin-bottom:12px;padding:10px 14px;background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.25);display:flex;justify-content:space-between;align-items:center">
+            <span style="font-size:11px;color:var(--gold)">📋 Borrador guardado — datos del cliente cargados</span>
+            <button onclick="ctClearDraft()" style="font-size:9px;color:var(--gray);background:none;border:none;cursor:pointer;letter-spacing:1px">✕ Limpiar</button>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr auto;gap:10px;align-items:stretch">
+            <button class="btn-add" id="ct-btn-gen" onclick="ctGenerar()" style="padding:16px;font-size:11px;letter-spacing:3px">GENERAR CONTRATO</button>
+            <button onclick="ctClearDraft()" style="padding:16px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:var(--gray);font-size:10px;letter-spacing:1.5px;cursor:pointer">Limpiar</button>
+          </div>
           <div id="ct-spinner" style="display:none;text-align:center;padding:20px;color:var(--gray);font-size:11px;letter-spacing:2px">Generando contrato · esto puede tardar 20–30 segundos...</div>
           <div id="ct-result" style="display:none;margin-top:20px;padding:20px;background:rgba(37,211,102,0.05);border:1px solid rgba(37,211,102,0.2)">
             <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--green);margin-bottom:8px">Contrato generado</div>
@@ -4416,6 +4423,13 @@ function initContratosPage() {
   document.getElementById('ct-dia-firma').valueAsDate = new Date();
   if (ctSvcData.length === 0 && ctGetUrl()) ctCargarServicios();
   ctInitSolicitudes();
+  // Historial: abrir y cargar automáticamente
+  const histBody  = document.getElementById('ct-hist-body');
+  const histArrow = document.getElementById('ct-hist-arrow');
+  if (histBody) { histBody.style.display = 'block'; if (histArrow) histArrow.textContent = '▲'; }
+  if (ctGetUrl()) ctLoadHistorial();
+  // Borrador
+  ctRestoreDraft();
 }
 
 function _ctBuildPage_UNUSED() {
@@ -4717,6 +4731,11 @@ function ctSelTipo(tipo) {
       }).catch(() => {});
   }
   ctCalcTotal();
+  // Activar auto-save en todos los inputs del formulario
+  document.querySelectorAll('#ct-form-area input, #ct-form-area select').forEach(el => {
+    el.oninput  = ctScheduleSaveDraft;
+    el.onchange = ctScheduleSaveDraft;
+  });
 }
 
 function ctToggleEvento(tipo, visible) {
@@ -4799,6 +4818,8 @@ async function ctGenerar() {
       document.getElementById('ct-res-links').innerHTML = links;
       document.getElementById('ct-result').style.display = 'block';
       toast('Contrato ' + json.numero + ' generado ✓');
+      ctClearDraft();
+      ctHistLoaded = false; ctLoadHistorial();
     } else {
       toast('Error: ' + json.error, 'error');
     }
@@ -4807,6 +4828,60 @@ async function ctGenerar() {
     document.getElementById('ct-btn-gen').disabled = false;
     toast('Error de conexión con Apps Script', 'error');
   }
+}
+
+// ── BORRADOR ──
+const CT_DRAFT_KEY = 'crd_ct_draft';
+let ctDraftTimer = null;
+
+function ctScheduleSaveDraft() {
+  clearTimeout(ctDraftTimer);
+  ctDraftTimer = setTimeout(ctSaveDraft, 800);
+}
+
+function ctSaveDraft() {
+  if (!ctTipo) return;
+  const fields = {};
+  document.querySelectorAll('#ct-form-area input, #ct-form-area select').forEach(el => {
+    if (!el.id) return;
+    fields[el.id] = el.type === 'checkbox' ? el.checked : el.value;
+  });
+  S.set(CT_DRAFT_KEY, { tipo: ctTipo, fields });
+  const banner = document.getElementById('ct-draft-banner');
+  if (banner) banner.style.display = 'flex';
+}
+
+function ctRestoreDraft() {
+  const draft = S.get(CT_DRAFT_KEY);
+  if (!draft || !draft.tipo) return;
+  ctSelTipo(draft.tipo);
+  setTimeout(() => {
+    Object.entries(draft.fields || {}).forEach(([id, val]) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      if (el.type === 'checkbox') el.checked = val;
+      else el.value = val;
+    });
+    ctCalcTotal();
+    const banner = document.getElementById('ct-draft-banner');
+    if (banner) banner.style.display = 'flex';
+  }, 100);
+}
+
+function ctClearDraft() {
+  S.set(CT_DRAFT_KEY, null);
+  const banner = document.getElementById('ct-draft-banner');
+  if (banner) banner.style.display = 'none';
+  // Reset form
+  document.querySelectorAll('#ct-form-area input, #ct-form-area select').forEach(el => {
+    if (el.type === 'checkbox') el.checked = false;
+    else if (el.type !== 'date' || el.id !== 'ct-dia-firma') el.value = '';
+  });
+  document.querySelectorAll('.ct-tipo-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('ct-form-area').style.display = 'none';
+  document.getElementById('ct-num-preview').style.display = 'none';
+  ctTipo = null;
+  ctCalcTotal();
 }
 
 // ── SOLICITUDES ──
@@ -4902,6 +4977,7 @@ async function ctCargarSolicitud(sol) {
   const url = ctGetUrl();
   if (url) fetch(url, { method:'POST', body: JSON.stringify({ action:'marcarSolicitudUsada', id: sol.id }) }).catch(()=>{});
 
+  setTimeout(ctSaveDraft, 200);
   toast('Datos cargados del cliente — completá precio y servicios');
   document.getElementById('ct-form-area').scrollIntoView({ behavior: 'smooth' });
 }
