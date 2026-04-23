@@ -4733,8 +4733,12 @@ function ctSelTipo(tipo) {
   ctCalcTotal();
   // Activar auto-save en todos los inputs del formulario
   document.querySelectorAll('#ct-form-area input, #ct-form-area select').forEach(el => {
-    el.oninput  = ctScheduleSaveDraft;
-    el.onchange = ctScheduleSaveDraft;
+    if (el.id === 'ct-precio') {
+      el.oninput = () => { ctCalcTotal(true); ctScheduleSaveDraft(); };
+    } else {
+      el.oninput  = ctScheduleSaveDraft;
+      el.onchange = ctScheduleSaveDraft;
+    }
   });
 }
 
@@ -5059,93 +5063,111 @@ function ctCargarContrato(idx) {
   const c = ctHistData[idx];
   if (!c) return;
   const d = c.formData || {};
-  if (!d.tipo && !c.tipo) { toast('Este contrato no tiene datos guardados para cargar', 'error'); return; }
   const tipo = d.tipo || c.tipo;
+  if (!tipo) return;
+
   ctSelTipo(tipo);
 
-  function set(id, val) {
-    const el = document.getElementById(id);
-    if (!el || val == null) return;
-    if (el.type === 'checkbox') el.checked = !!val;
-    else el.value = val;
-  }
-
-  set('ct-ciudad',   d.ciudad);
-  set('ct-dia-firma', d.diaFirma);
-  set('ct-precio',   d.precioTotal || c.precio);
-
-  if (tipo === 'BODA') {
-    set('ct-b-novia-nombre',    d.novia?.nombre);
-    set('ct-b-novia-dni',       d.novia?.dni);
-    set('ct-b-novia-tel',       d.novia?.telefono);
-    set('ct-b-novia-email',     d.novia?.email);
-    set('ct-b-novio-nombre',    d.novio?.nombre);
-    set('ct-b-novio-dni',       d.novio?.dni);
-    set('ct-b-novio-dom',       d.novio?.domicilio);
-    set('ct-b-novio-tel',       d.novio?.telefono);
-    set('ct-b-novio-email',     d.novio?.email);
-    set('ct-b-fiesta-fecha',    d.fiesta?.fecha);
-    set('ct-b-fiesta-hora',     d.fiesta?.horarioInicio);
-    set('ct-b-fiesta-salon',    d.fiesta?.lugar);
-    set('ct-b-fiesta-dir',      d.fiesta?.direccion);
-    set('ct-b-contacto-nombre', d.contacto?.nombre);
-    set('ct-b-contacto-rel',    d.contacto?.relacion);
-    set('ct-b-contacto-tel',    d.contacto?.telefono);
-    set('ct-b-paquete',         d.nombrePaquete);
-    if (d.civil) {
-      set('ct-b-tiene-civil', true);
-      document.getElementById('ct-b-civil-fields')?.style && (document.getElementById('ct-b-civil-fields').style.display='block');
-      set('ct-b-civil-fecha', d.civil.fecha);
-      set('ct-b-civil-hora',  d.civil.horario);
-      set('ct-b-civil-dir',   d.civil.direccion);
+  // setTimeout para correr DESPUÉS de que ctSelTipo llame a ctCalcTotal() y pise ct-precio
+  setTimeout(() => {
+    function set(id, val) {
+      const el = document.getElementById(id);
+      if (!el || val == null || val === '') return;
+      if (el.type === 'checkbox') el.checked = !!val;
+      else el.value = val;
     }
-    if (d.religiosa) {
-      set('ct-b-tiene-reli', true);
-      document.getElementById('ct-b-reli-fields')?.style && (document.getElementById('ct-b-reli-fields').style.display='block');
-      set('ct-b-reli-fecha', d.religiosa.fecha);
-      set('ct-b-reli-hora',  d.religiosa.horario);
-      set('ct-b-reli-dir',   d.religiosa.direccion);
+
+    set('ct-ciudad',    d.ciudad);
+    set('ct-dia-firma', d.diaFirma);
+
+    if (tipo === 'BODA') {
+      set('ct-b-novia-nombre',    d.novia?.nombre);
+      set('ct-b-novia-dni',       d.novia?.dni);
+      set('ct-b-novia-tel',       d.novia?.telefono);
+      set('ct-b-novia-email',     d.novia?.email);
+      set('ct-b-novio-nombre',    d.novio?.nombre);
+      set('ct-b-novio-dni',       d.novio?.dni);
+      set('ct-b-novio-dom',       d.novio?.domicilio);
+      set('ct-b-novio-tel',       d.novio?.telefono);
+      set('ct-b-novio-email',     d.novio?.email);
+      set('ct-b-fiesta-fecha',    d.fiesta?.fecha);
+      set('ct-b-fiesta-hora',     d.fiesta?.horarioInicio);
+      set('ct-b-fiesta-salon',    d.fiesta?.lugar);
+      set('ct-b-fiesta-dir',      d.fiesta?.direccion);
+      set('ct-b-contacto-nombre', d.contacto?.nombre);
+      set('ct-b-contacto-rel',    d.contacto?.relacion);
+      set('ct-b-contacto-tel',    d.contacto?.telefono);
+      set('ct-b-paquete',         d.nombrePaquete);
+      if (d.civil) {
+        set('ct-b-tiene-civil', true);
+        const f = document.getElementById('ct-b-civil-fields');
+        if (f) f.style.display = 'block';
+        set('ct-b-civil-fecha', d.civil.fecha);
+        set('ct-b-civil-hora',  d.civil.horario);
+        set('ct-b-civil-dir',   d.civil.direccion);
+      }
+      if (d.religiosa) {
+        set('ct-b-tiene-reli', true);
+        const f = document.getElementById('ct-b-reli-fields');
+        if (f) f.style.display = 'block';
+        set('ct-b-reli-fecha', d.religiosa.fecha);
+        set('ct-b-reli-hora',  d.religiosa.horario);
+        set('ct-b-reli-dir',   d.religiosa.direccion);
+      }
+    } else if (tipo === 'XV') {
+      set('ct-x-quince-nombre',  d.quinceanera?.nombre);
+      set('ct-x-quince-nac',     d.quinceanera?.fechaNacimiento);
+      set('ct-x-cliente-nombre', d.cliente?.nombre);
+      set('ct-x-cliente-dni',    d.cliente?.dni);
+      set('ct-x-cliente-tel',    d.cliente?.telefono);
+      set('ct-x-cliente-email',  d.cliente?.email);
+      set('ct-x-fecha',          d.evento?.fecha);
+      set('ct-x-hora-inicio',    d.evento?.horaInicio);
+      set('ct-x-hora-fin',       d.evento?.horaFin);
+      set('ct-x-salon',          d.evento?.salon);
+      set('ct-x-dir',            d.evento?.direccion);
+      set('ct-x-invitados',      d.evento?.invitados);
+      set('ct-x-cuotas',         d.cuotas);
+    } else if (tipo === 'CUMPLE') {
+      set('ct-c-nombre',      d.cliente?.nombre);
+      set('ct-c-dni',         d.cliente?.dni);
+      set('ct-c-tel',         d.cliente?.telefono);
+      set('ct-c-email',       d.cliente?.email);
+      set('ct-c-fecha',       d.evento?.fecha);
+      set('ct-c-hora-inicio', d.evento?.horaInicio);
+      set('ct-c-hora-fin',    d.evento?.horaFin);
+      set('ct-c-salon',       d.evento?.salon);
+      set('ct-c-dir',         d.evento?.direccion);
+      set('ct-c-invitados',   d.evento?.invitados);
+      set('ct-c-cuotas',      d.cuotas);
     }
-  } else if (tipo === 'XV') {
-    set('ct-x-quince-nombre',  d.quinceanera?.nombre);
-    set('ct-x-quince-nac',     d.quinceanera?.fechaNacimiento);
-    set('ct-x-cliente-nombre', d.cliente?.nombre);
-    set('ct-x-cliente-dni',    d.cliente?.dni);
-    set('ct-x-cliente-tel',    d.cliente?.telefono);
-    set('ct-x-cliente-email',  d.cliente?.email);
-    set('ct-x-fecha',          d.evento?.fecha);
-    set('ct-x-hora-inicio',    d.evento?.horaInicio);
-    set('ct-x-hora-fin',       d.evento?.horaFin);
-    set('ct-x-salon',          d.evento?.salon);
-    set('ct-x-dir',            d.evento?.direccion);
-    set('ct-x-invitados',      d.evento?.invitados);
-    set('ct-x-cuotas',         d.cuotas);
-  } else if (tipo === 'CUMPLE') {
-    set('ct-c-nombre',      d.cliente?.nombre);
-    set('ct-c-dni',         d.cliente?.dni);
-    set('ct-c-tel',         d.cliente?.telefono);
-    set('ct-c-email',       d.cliente?.email);
-    set('ct-c-fecha',       d.evento?.fecha);
-    set('ct-c-hora-inicio', d.evento?.horaInicio);
-    set('ct-c-hora-fin',    d.evento?.horaFin);
-    set('ct-c-salon',       d.evento?.salon);
-    set('ct-c-dir',         d.evento?.direccion);
-    set('ct-c-invitados',   d.evento?.invitados);
-    set('ct-c-cuotas',      d.cuotas);
-  }
 
-  // Marcar servicios
-  if (d.servicios?.length) {
-    const nombres = d.servicios.map(s => s.descripcion.toLowerCase());
-    ctSvcData.forEach(s => {
-      const cb = document.getElementById(`ct-svc-${s.id}`);
-      if (cb) cb.checked = nombres.includes(s.descripcion.toLowerCase());
-    });
-  }
+    // Marcar servicios y luego fijar precio
+    if (d.servicios?.length) {
+      const nombres = d.servicios.map(s => s.descripcion.toLowerCase());
+      ctSvcData.forEach(s => {
+        const cb = document.getElementById(`ct-svc-${s.id}`);
+        if (cb) cb.checked = nombres.includes(s.descripcion.toLowerCase());
+      });
+    }
 
-  ctCalcTotal(true);
-  toast('Contrato ' + c.numero + ' cargado en el formulario');
-  document.getElementById('ct-form-area').scrollIntoView({ behavior: 'smooth' });
+    // Fijar precio DESPUÉS de marcar servicios para que no sea pisado
+    const precioFinal = d.precioTotal || c.precio;
+    if (precioFinal) {
+      document.getElementById('ct-precio').value = precioFinal;
+      const disp = document.getElementById('ct-total-display');
+      if (disp) disp.textContent = ctFmt(Number(precioFinal));
+    } else {
+      ctCalcTotal();
+    }
+
+    const hasData = Object.keys(d).length > 2;
+    toast(hasData
+      ? 'Contrato ' + c.numero + ' cargado — modificá lo que necesites'
+      : 'Contrato ' + c.numero + ' cargado (solo tipo y precio disponibles — datos completos solo en contratos nuevos)'
+    );
+    document.getElementById('ct-form-area').scrollIntoView({ behavior: 'smooth' });
+  }, 50);
 }
 
 // Check session on load
