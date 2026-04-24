@@ -625,6 +625,7 @@ async function submitRSVP() {
   errorEl.style.display = 'none';
   if (!nombre || !apellido) { errorEl.textContent = 'Por favor ingresá nombre y apellido.'; errorEl.style.display = 'block'; return; }
   if (!asistencia) { errorEl.textContent = 'Por favor confirmá si vas a asistir.'; errorEl.style.display = 'block'; return; }
+  if (document.getElementById('rsvp-alergia').checked && !document.getElementById('rsvp-alergia-detail').value.trim()) { errorEl.textContent = 'Por favor describí tu alergia.'; errorEl.style.display = 'block'; document.getElementById('rsvp-alergia-detail').focus(); return; }
   const btn = document.getElementById('rsvp-btn');
   btn.disabled = true; btn.textContent = 'Enviando...';
   const restricciones = [];
